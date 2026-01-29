@@ -1,0 +1,34 @@
+spring:
+  application:
+    name: USER-SERVICE
+
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/IndiChessMicroServiceDB}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:1234}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    show-sql: ${JPA_SHOW_SQL:false}
+    open-in-view: false
+
+server:
+  port: ${SERVER_PORT:8081}
+
+jwt:
+  secret: ${JWT_SECRET:aluesgo8q37g4tifqbhrefg8g3124ib801g7br18b7gb17g4b}
+  expiration: ${JWT_EXPIRATION:3600000}
+  secure-cookie: ${JWT_SECURE:false}
+  header: Authorization
+  prefix: Bearer
+  cookie-name: JWT
+
+security:
+  public-urls: /signup,/login,/logout,/actuator/**
+
+user:
+  default-rating: 1200
+
+

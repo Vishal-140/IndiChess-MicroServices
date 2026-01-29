@@ -1,5 +1,6 @@
 package com.example.matchmakingservice.service;
 
+import com.example.matchmakingservice.client.GameServiceClient;
 import com.example.matchmakingservice.entity.GameType;
 import com.example.matchmakingservice.entity.Match;
 import com.example.matchmakingservice.entity.MatchStatus;
@@ -26,32 +27,41 @@ public class MatchService {
 
     private final MatchRepo matchRepo;
     private final MatchQueueService matchQueueService;
+    private final GameServiceClient gameServiceClient; // ✅ FEIGN CLIENT
 
     public MatchService(
             MatchRepo matchRepo,
-            MatchQueueService matchQueueService
+            MatchQueueService matchQueueService,
+            GameServiceClient gameServiceClient
     ) {
         this.matchRepo = matchRepo;
         this.matchQueueService = matchQueueService;
+        this.gameServiceClient = gameServiceClient;
 
         for (GameType type : GameType.values()) {
             waitingPlayers.put(type, ConcurrentHashMap.newKeySet());
         }
     }
 
+    // ======================
     // JOIN QUEUE
+    // ======================
     public Optional<Long> joinQueue(Long userId, GameType gameType) {
 
-        if (gameType == null) gameType = GameType.STANDARD;
+        if (gameType == null) {
+            gameType = GameType.STANDARD;
+        }
 
         Set<Long> queue = waitingPlayers.get(gameType);
 
         synchronized (queue) {
 
+            // already waiting
             if (queue.contains(userId)) {
-                return Optional.of(-1L); // already waiting
+                return Optional.of(-1L);
             }
 
+            // try to find opponent
             for (Long opponentId : queue) {
 
                 if (!opponentId.equals(userId)) {
@@ -59,12 +69,19 @@ public class MatchService {
                     Match match = new Match(
                             opponentId,
                             userId,
-                            MatchStatus.CREATED, // ✅ FIX
+                            MatchStatus.CREATED,
                             gameType
                     );
 
                     matchRepo.save(match);
                     Long matchId = match.getId();
+
+                    // ✅ CALL GAME-SERVICE USING FEIGN
+                    gameServiceClient.createGame(
+                            opponentId,
+                            userId,
+                            matchId
+                    );
 
                     matchQueueService.addPendingMatch(
                             opponentId,
@@ -72,7 +89,7 @@ public class MatchService {
                             matchId
                     );
 
-                    // ✅ CLEANUP BOTH USERS
+                    // cleanup
                     queue.remove(opponentId);
                     queue.remove(userId);
                     waitingStartTime.remove(opponentId);
@@ -86,14 +103,18 @@ public class MatchService {
             queue.add(userId);
             waitingStartTime.put(userId, System.currentTimeMillis());
 
-            return Optional.of(-1L);
+            return Optional.of(-1L); // still waiting
         }
     }
 
+    // ======================
     // CHECK MATCH
+    // ======================
     public Optional<Long> checkMatch(Long userId, GameType gameType) {
 
-        if (gameType == null) gameType = GameType.STANDARD;
+        if (gameType == null) {
+            gameType = GameType.STANDARD;
+        }
 
         Set<Long> queue = waitingPlayers.get(gameType);
 
@@ -117,13 +138,19 @@ public class MatchService {
         return Optional.of(-1L); // still waiting
     }
 
+    // ======================
     // CANCEL QUEUE
+    // ======================
     public boolean cancelQueue(Long userId, GameType gameType) {
 
-        if (gameType == null) gameType = GameType.STANDARD;
+        if (gameType == null) {
+            gameType = GameType.STANDARD;
+        }
 
         Set<Long> queue = waitingPlayers.get(gameType);
-        if (queue == null) return false;
+        if (queue == null) {
+            return false;
+        }
 
         waitingStartTime.remove(userId);
         return queue.remove(userId);

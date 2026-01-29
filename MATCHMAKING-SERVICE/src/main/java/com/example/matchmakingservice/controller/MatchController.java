@@ -19,9 +19,10 @@ public class MatchController {
             @RequestHeader("X-USER-ID") Long userId,
             @RequestParam(defaultValue = "STANDARD") GameType gameType
     ) {
-        return new MatchResponse(
-                matchService.joinQueue(userId, gameType).orElse(-2L)
-        );
+        Long result = matchService.joinQueue(userId, gameType)
+                .orElse(-2L);
+
+        return new MatchResponse(result);
     }
 
     // CHECK MATCH
@@ -30,9 +31,10 @@ public class MatchController {
             @RequestHeader("X-USER-ID") Long userId,
             @RequestParam(defaultValue = "STANDARD") GameType gameType
     ) {
-        return new MatchResponse(
-                matchService.checkMatch(userId, gameType).orElse(-2L)
-        );
+        Long result = matchService.checkMatch(userId, gameType)
+                .orElse(-2L);
+
+        return new MatchResponse(result);
     }
 
     // CANCEL QUEUE

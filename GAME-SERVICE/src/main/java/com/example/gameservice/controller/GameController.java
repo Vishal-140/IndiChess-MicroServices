@@ -10,16 +10,32 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/games")
 @RequiredArgsConstructor
 public class GameController {
 
     private final GameService gameService;
 
+    // =================================================
+    // USED BY MATCHMAKING (OPEN FEIGN)
+    // =================================================
+    @PostMapping("/game/create")
+    public Long createGameForMatchmaking(
+            @RequestParam Long whitePlayerId,
+            @RequestParam Long blackPlayerId,
+            @RequestParam Long matchId
+    ) {
+        Game game = gameService.createGameFromMatchmaking(
+                whitePlayerId,
+                blackPlayerId,
+                matchId
+        );
+        return game.getId();
+    }
+
     // =========================
     // CREATE GAME
     // =========================
-    @PostMapping
+    @PostMapping("/games")
     public GameResponse createGame(
             @RequestHeader("X-PLAYER1-ID") Long player1Id,
             @RequestHeader("X-PLAYER2-ID") Long player2Id,
@@ -34,7 +50,7 @@ public class GameController {
     // =========================
     // GET GAME
     // =========================
-    @GetMapping("/{gameId}")
+    @GetMapping("/games/{gameId}")
     public GameResponse getGame(
             @PathVariable Long gameId,
             @RequestHeader("X-USER-ID") Long userId
@@ -46,7 +62,7 @@ public class GameController {
     // =========================
     // MAKE MOVE
     // =========================
-    @PostMapping("/{gameId}/move")
+    @PostMapping("/games/{gameId}/move")
     public MoveResponse makeMove(
             @PathVariable Long gameId,
             @RequestHeader("X-USER-ID") Long userId,

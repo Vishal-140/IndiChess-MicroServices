@@ -17,8 +17,30 @@ public class GameService {
     private final GameRepo gameRepo;
     private final MoveRepo moveRepo;
 
+    // =================================================
+    // CALLED BY MATCHMAKING (FEIGN)
+    // =================================================
+    public Game createGameFromMatchmaking(
+            Long whitePlayerId,
+            Long blackPlayerId,
+            Long matchId
+    ) {
+        Game game = new Game();
+        game.setPlayer1Id(whitePlayerId); // WHITE
+        game.setPlayer2Id(blackPlayerId); // BLACK
+        game.setMatchId(matchId);
+        game.setGameType(GameType.STANDARD);
+        game.setStatus(GameStatus.IN_PROGRESS);
+        game.setCurrentPly(0);
+        game.setFenCurrent(
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        );
+
+        return gameRepo.save(game);
+    }
+
     // =========================
-    // CREATE GAME
+    // CREATE GAME (MANUAL)
     // =========================
     public Game createGame(
             Long player1Id,
@@ -27,15 +49,14 @@ public class GameService {
     ) {
         Game game = new Game(player1Id, player2Id, gameType);
         game.setStatus(GameStatus.IN_PROGRESS);
-        gameRepo.save(game);
-        return game;
+        game.setCurrentPly(0);
+        return gameRepo.save(game);
     }
 
     // =========================
     // GET GAME
     // =========================
     public Game getGame(Long gameId, Long userId) {
-
         Game game = gameRepo.findById(gameId)
                 .orElseThrow(() -> new RuntimeException("Game not found"));
 
@@ -43,7 +64,6 @@ public class GameService {
                 && !userId.equals(game.getPlayer2Id())) {
             throw new RuntimeException("Not your game");
         }
-
         return game;
     }
 
@@ -55,7 +75,6 @@ public class GameService {
             Long userId,
             MoveRequest request
     ) {
-
         Game game = gameRepo.findById(gameId)
                 .orElseThrow(() -> new RuntimeException("Game not found"));
 
@@ -71,7 +90,6 @@ public class GameService {
             throw new RuntimeException("Not your turn");
         }
 
-        // SAVE MOVE
         Move move = new Move();
         move.setGameId(gameId);
         move.setPly(game.getCurrentPly() + 1);
@@ -83,12 +101,10 @@ public class GameService {
 
         moveRepo.save(move);
 
-        // UPDATE GAME
         game.setCurrentPly(move.getPly());
         game.setLastMoveUci(move.getUci());
         gameRepo.save(game);
 
-        // RESPONSE
         MoveResponse res = new MoveResponse();
         res.setGameId(gameId);
         res.setUci(move.getUci());
@@ -106,7 +122,6 @@ public class GameService {
     // RESIGN
     // =========================
     public void resign(Long gameId, Long userId) {
-
         Game game = gameRepo.findById(gameId)
                 .orElseThrow(() -> new RuntimeException("Game not found"));
 
@@ -115,9 +130,9 @@ public class GameService {
         }
 
         if (userId.equals(game.getPlayer1Id())) {
-            game.setStatus(GameStatus.PLAYER2_WON);
+            game.setStatus(GameStatus.BLACK_WON);
         } else if (userId.equals(game.getPlayer2Id())) {
-            game.setStatus(GameStatus.PLAYER1_WON);
+            game.setStatus(GameStatus.WHITE_WON);
         } else {
             throw new RuntimeException("Not your game");
         }

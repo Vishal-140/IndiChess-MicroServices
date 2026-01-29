@@ -14,11 +14,17 @@ public class Game {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // White player
     @Column(name = "player1_id", nullable = false)
     private Long player1Id;
 
+    // Black player
     @Column(name = "player2_id", nullable = false)
     private Long player2Id;
+
+    // Link to Match
+    @Column(name = "match_id", nullable = false)
+    private Long matchId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -51,6 +57,7 @@ public class Game {
     private static final String START_FEN =
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
+    // Used for MANUAL game creation
     public Game(Long player1Id, Long player2Id, GameType gameType) {
         this.player1Id = player1Id;
         this.player2Id = player2Id;

@@ -35,4 +35,10 @@ public class AuthService {
 
         return userRepo.save(user);
     }
+
+    // REQUIRED METHOD
+    public User findByUsername(String username) {
+        return userRepo.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
 }

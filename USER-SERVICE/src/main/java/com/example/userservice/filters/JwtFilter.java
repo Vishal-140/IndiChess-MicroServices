@@ -35,6 +35,15 @@ public class JwtFilter extends OncePerRequestFilter {
     private String cookieName;
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+        return path.equals("/signup")
+                || path.equals("/login")
+                || path.equals("/logout")
+                || path.startsWith("/actuator");
+    }
+
+    @Override
     protected void doFilterInternal(
             HttpServletRequest request,
             HttpServletResponse response,
@@ -85,13 +94,13 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private String extractToken(HttpServletRequest request) {
 
-        // 1️⃣ Try Authorization header (BEST for microservices)
+        // Authorization header
         String authHeader = request.getHeader(jwtHeader);
         if (authHeader != null && authHeader.startsWith(jwtPrefix + " ")) {
             return authHeader.substring((jwtPrefix + " ").length());
         }
 
-        // 2️⃣ Fallback to cookie (browser support)
+        //  Cookie fallback
         if (request.getCookies() == null) return null;
 
         for (Cookie cookie : request.getCookies()) {

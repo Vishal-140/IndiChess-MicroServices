@@ -8,6 +8,7 @@
         <option value="$PROJECT_DIR$/GAME-SERVICE/pom.xml" />
         <option value="$PROJECT_DIR$/SERVICE-REGISTRY/pom.xml" />
         <option value="$PROJECT_DIR$/USER-SERVICE/pom.xml" />
+        <option value="$PROJECT_DIR$/API-GATEWAY/pom.xml" />
       </list>
     </option>
   </component>

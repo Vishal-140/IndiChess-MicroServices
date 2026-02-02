@@ -16,14 +16,21 @@ public class MatchController {
     // JOIN QUEUE
     @PostMapping("/join")
     public MatchResponse joinQueue(
-            @RequestHeader("X-USER-ID") Long userId,
+            @RequestHeader(value = "X-USER-ID", required = false) Long userId,
             @RequestParam(defaultValue = "STANDARD") GameType gameType
     ) {
+        System.out.println("MATCH-SERVICE → received X-USER-ID = " + userId);
+
+        if (userId == null) {
+            throw new RuntimeException("X-USER-ID is missing");
+        }
+
         Long result = matchService.joinQueue(userId, gameType)
                 .orElse(-2L);
 
         return new MatchResponse(result);
     }
+
 
     // CHECK MATCH
     @GetMapping("/check")

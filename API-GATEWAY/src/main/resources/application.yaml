@@ -1,0 +1,47 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: API-GATEWAY
+
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+
+      routes:
+        # USER SERVICE
+        - id: user-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/signup,/login,/logout,/home
+
+        # MATCHMAKING SERVICE
+        - id: matchmaking-service
+          uri: lb://MATCHMAKING-SERVICE
+          predicates:
+            - Path=/matchmaking/**
+
+        # GAME SERVICE
+        - id: game-service
+          uri: lb://GAME-SERVICE
+          predicates:
+            - Path=/game/**,/games/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+# JWT CONFIG
+jwt:
+  secret: aluesgo8q37g4tifqbhrefg8g3124ib801g7br18b7gb17g4b
+  header: Authorization
+  prefix: Bearer
+
+# PUBLIC URLS
+security:
+  public-urls: /signup,/login,/logout,/actuator

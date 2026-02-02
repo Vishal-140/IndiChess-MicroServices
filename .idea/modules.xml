@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/IndiChess-MircroService.iml" filepath="$PROJECT_DIR$/.idea/IndiChess-MircroService.iml" />
+      <module fileurl="file://$PROJECT_DIR$/API-GATEWAY/api-gateway.iml" filepath="$PROJECT_DIR$/API-GATEWAY/api-gateway.iml" />
     </modules>
   </component>
 </project>

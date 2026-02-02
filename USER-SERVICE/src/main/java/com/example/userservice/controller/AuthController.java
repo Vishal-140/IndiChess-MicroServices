@@ -59,7 +59,14 @@ public class AuthController {
                     .body(new LoginResponseDto(null, null));
         }
 
-        String token = jwtService.generateToken(loginDto.getUsername());
+        // fetch user from DB
+        User user = authService.findByUsername(loginDto.getUsername());
+
+        // generate token with userId
+        String token = jwtService.generateToken(
+                user.getUserId(),
+                user.getUsername()
+        );
 
         ResponseCookie cookie = ResponseCookie.from(cookieName, token)
                 .httpOnly(true)
@@ -72,7 +79,7 @@ public class AuthController {
         response.setHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
         return ResponseEntity.ok(
-                new LoginResponseDto(loginDto.getUsername(), token)
+                new LoginResponseDto(user.getUsername(), token)
         );
     }
 

@@ -25,13 +25,11 @@ public class GameService {
     public Game createGameFromMatchmaking(
             Long whitePlayerId,
             Long blackPlayerId,
-            Long matchId
+            Long matchId,
+            GameType gameType
     ) {
-        Game game = new Game();
-        game.setPlayer1Id(whitePlayerId); // WHITE
-        game.setPlayer2Id(blackPlayerId); // BLACK
+        Game game = new Game(whitePlayerId, blackPlayerId, gameType);
         game.setMatchId(matchId);
-        game.setGameType(GameType.STANDARD);
         game.setStatus(GameStatus.IN_PROGRESS);
         game.setCurrentPly(0);
         game.setFenCurrent(

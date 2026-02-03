@@ -22,12 +22,14 @@ public class GameController {
     public Long createGameForMatchmaking(
             @RequestParam Long whitePlayerId,
             @RequestParam Long blackPlayerId,
-            @RequestParam Long matchId
+            @RequestParam Long matchId,
+            @RequestParam GameType gameType
     ) {
         Game game = gameService.createGameFromMatchmaking(
                 whitePlayerId,
                 blackPlayerId,
-                matchId
+                matchId,
+                gameType
         );
         return game.getId();
     }

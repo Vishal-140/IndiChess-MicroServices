@@ -16,13 +16,17 @@ function LoginCard({ handleToggleSignup }) {
       // Send login request to backend
       const response = await axios.post("http://localhost:8060/login", {
         username,
-        password,
+        password
+      }, {
         withCredentials: true
-
       });
 
       // If login is successful, redirect to home
-      if (response) {
+      if (response && response.data) {
+        // Store userId for AuthWrapper
+        if (response.data.userId) {
+          localStorage.setItem("userId", response.data.userId);
+        }
 
         console.log(response);
         navigate("/home");

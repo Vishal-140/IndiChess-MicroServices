@@ -56,7 +56,7 @@ public class AuthController {
         if (!auth.isAuthenticated()) {
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
-                    .body(new LoginResponseDto(null, null));
+                    .body(new LoginResponseDto(null, null, null));
         }
 
         // fetch user from DB
@@ -79,7 +79,7 @@ public class AuthController {
         response.setHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
         return ResponseEntity.ok(
-                new LoginResponseDto(user.getUsername(), token)
+                new LoginResponseDto(user.getUserId(), user.getUsername(), token)
         );
     }
 

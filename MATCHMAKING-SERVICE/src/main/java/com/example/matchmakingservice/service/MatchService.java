@@ -59,7 +59,7 @@ public class MatchService {
 
             // Call Game Service
             try {
-                gameServiceClient.createGame(opponentId, userId, matchId);
+                gameServiceClient.createGame(opponentId, userId, matchId, gameType);
             } catch (Exception e) {
                 // If game creation fails, rollback is complex in microservices. 
                 // For now, we assume it works or we might need a Saga.

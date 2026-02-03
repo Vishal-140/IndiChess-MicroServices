@@ -2,20 +2,7 @@ import React, { useEffect } from "react";
 
 const Moves = ({ moves }) => {
 
-  // Function to send move data to the backend API
-  const sendMoveToServer = (move) => {
-    fetch('http://localhost:8080/game', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(move),
-      credentials: 'include'
-    })
-      .then(response => response.json())
-      .then(data => console.log("Move submitted:", data))
-      .catch(error => console.error("Error submitting move:", error));
-  };
+
 
   // Effect hook to watch changes in the `moves` array and send to the API
   useEffect(() => {
@@ -41,7 +28,7 @@ const Moves = ({ moves }) => {
       };
 
       // Call the function to send the move to the server
-      // sendMoveToServer(move); // DISABLE: WebSocket already handles moves, and this endpoint is wrong/redundant
+
     }
   }, [moves]); // Dependency on `moves` array
 

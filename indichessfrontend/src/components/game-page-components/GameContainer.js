@@ -12,6 +12,7 @@ const GameContainer = () => {
   const [fen, setFen] = useState(""); // Backend FEN
   const stompClientRef = useRef(null);
   const userId = localStorage.getItem("userId") || "0";
+  const [statusMessage, setStatusMessage] = useState("Connecting...");
 
   const [userColor, setUserColor] = useState(null); // 'w' or 'b'
 
@@ -40,6 +41,37 @@ const GameContainer = () => {
             setUserColor('spectator');
           }
           if (data.fenCurrent) setFen(data.fenCurrent);
+
+          // Set Initial Status
+          if (data.status && data.status !== "IN_PROGRESS") {
+            setStatusMessage(`Game Over: ${data.status}`);
+          } else {
+            const currentPly = data.currentPly || 0;
+            const isWhiteTurn = currentPly % 2 === 0;
+            let msg = "Spectating";
+            if (String(data.player1Id) === String(userId)) {
+              msg = isWhiteTurn ? "Your Turn" : "Opponent's Turn";
+            } else if (String(data.player2Id) === String(userId)) {
+              msg = !isWhiteTurn ? "Your Turn" : "Opponent's Turn";
+            }
+            setStatusMessage(msg);
+          }
+
+          // Restore Moves
+          if (data.moves && Array.isArray(data.moves)) {
+            const restoredMoves = [];
+            for (let i = 0; i < data.moves.length; i += 2) {
+              const whiteMove = data.moves[i];
+              const blackMove = data.moves[i + 1];
+
+              const moveObj = {
+                moveToWhite: whiteMove.san || whiteMove.uci,
+                moveToBlack: blackMove ? (blackMove.san || blackMove.uci) : null,
+              };
+              restoredMoves.push(moveObj);
+            }
+            setMoves(restoredMoves);
+          }
         }
       } catch (e) {
         console.error("Failed to fetch game details", e);
@@ -64,6 +96,18 @@ const GameContainer = () => {
 
           if (body.fen) {
             setFen(body.fen);
+
+            // Update Turn Status
+            if (body.status && body.status !== "IN_PROGRESS") {
+              setStatusMessage(`Game Over: ${body.status}`);
+            } else {
+              const nextTurn = body.nextTurn; // "WHITE" or "BLACK"
+              if (userColor === 'w') {
+                setStatusMessage(nextTurn === 'WHITE' ? "Your Turn" : "Opponent's Turn");
+              } else if (userColor === 'b') {
+                setStatusMessage(nextTurn === 'BLACK' ? "Your Turn" : "Opponent's Turn");
+              }
+            }
           }
         });
       },
@@ -176,7 +220,7 @@ const GameContainer = () => {
 
   return (
     <div className="game-container">
-      <BoardLayout addMove={addMove} fen={fen} userColor={userColor} />
+      <BoardLayout addMove={addMove} fen={fen} userColor={userColor} statusMessage={statusMessage} />
       <GamePlayControlContainer moves={moves} />
     </div>
   );

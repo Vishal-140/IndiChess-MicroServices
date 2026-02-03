@@ -57,8 +57,7 @@ public class GameController {
             @PathVariable Long gameId,
             @RequestHeader("X-USER-ID") Long userId
     ) {
-        Game game = gameService.getGame(gameId, userId);
-        return GameResponse.from(game);
+        return gameService.getGameDetails(gameId, userId);
     }
 
     // =========================

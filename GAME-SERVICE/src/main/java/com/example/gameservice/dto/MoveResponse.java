@@ -8,6 +8,7 @@ public class MoveResponse {
     private Long gameId;
 
     private String uci;         // e2e4
+    private String san;         // e4, Nf3
     private String fen;         // updated FEN
 
     private Integer currentPly;

@@ -2,6 +2,7 @@ package com.example.gameservice.dto;
 
 import com.example.gameservice.entity.Game;
 import lombok.Data;
+import java.util.List;
 
 @Data
 public class GameResponse {
@@ -16,6 +17,8 @@ public class GameResponse {
     private String fen;
     private Integer whiteTime;
     private Integer blackTime;
+
+    private List<MoveResponse> moves;
 
     public static GameResponse from(Game game) {
         GameResponse res = new GameResponse();

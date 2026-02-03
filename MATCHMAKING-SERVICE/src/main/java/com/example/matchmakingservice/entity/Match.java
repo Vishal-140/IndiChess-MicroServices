@@ -20,6 +20,9 @@ public class Match {
     @Column(name = "player2_id", nullable = false)
     private Long player2Id;
 
+    @Column(name = "game_id")
+    private Long gameId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private MatchStatus status;

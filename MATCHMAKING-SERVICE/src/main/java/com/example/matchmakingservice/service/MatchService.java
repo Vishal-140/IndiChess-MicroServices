@@ -59,18 +59,23 @@ public class MatchService {
 
             // Call Game Service
             try {
-                gameServiceClient.createGame(opponentId, userId, matchId, gameType);
+                Long gameId = gameServiceClient.createGame(opponentId, userId, matchId, gameType);
+                match.setGameId(gameId);
+                matchRepo.save(match);
+                
+                // Remove opponent from queue
+                matchQueueRepo.delete(opponentEntry);
+
+                return Optional.of(gameId);
             } catch (Exception e) {
                 // If game creation fails, rollback is complex in microservices. 
                 // For now, we assume it works or we might need a Saga.
                 // Or just fail this request.
+                // If we fail here, we should probably delete the match or mark it FAILED.
+                match.setStatus(MatchStatus.FINISHED); // Or ERROR
+                matchRepo.save(match);
                 throw new RuntimeException("Failed to create game", e);
             }
-
-            // Remove opponent from queue
-            matchQueueRepo.delete(opponentEntry);
-
-            return Optional.of(matchId);
         } else {
             // No opponent found -> Add to queue
             MatchQueueEntry newEntry = MatchQueueEntry.builder()
@@ -100,8 +105,13 @@ public class MatchService {
         if (matchOpt.isPresent()) {
             Match match = matchOpt.get();
             // If match is recent and status is CREATED or IN_PROGRESS (game started)
-            // We return it.
-            return Optional.of(match.getId());
+            // We return gameId
+            if (match.getGameId() != null) {
+                return Optional.of(match.getGameId());
+            }
+            // Fallback if gameId not set yet? Or ignore.
+            // Maybe it is being created processing?
+            // For now, assume consistent.
         }
 
         // 2. Check for Timeout in Queue

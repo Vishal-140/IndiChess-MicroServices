@@ -56,15 +56,33 @@ public class GameService {
     // =========================
     // GET GAME
     // =========================
-    public Game getGame(Long gameId, Long userId) {
+    public com.example.gameservice.dto.GameResponse getGameDetails(Long gameId, Long userId) {
         Game game = gameRepo.findById(gameId)
                 .orElseThrow(() -> new RuntimeException("Game not found"));
+
+        System.out.println("GET GAME DETAILS: gameId=" + gameId + ", P1=" + game.getPlayer1Id() + ", P2=" + game.getPlayer2Id() + ", reqUser=" + userId);
 
         if (!userId.equals(game.getPlayer1Id())
                 && !userId.equals(game.getPlayer2Id())) {
             throw new RuntimeException("Not your game");
         }
-        return game;
+        
+        com.example.gameservice.dto.GameResponse response = com.example.gameservice.dto.GameResponse.from(game);
+        
+        java.util.List<Move> moves = moveRepo.findByGameIdOrderByPlyAsc(gameId);
+        java.util.List<MoveResponse> moveResponses = moves.stream().map(move -> {
+            MoveResponse mr = new MoveResponse();
+            mr.setGameId(move.getGameId());
+            mr.setUci(move.getUci());
+            mr.setSan(move.getSan() != null ? move.getSan() : move.getUci()); // Fallback to UCI
+            mr.setFen(move.getFenAfter());
+            mr.setCurrentPly(move.getPly());
+            // mr.setNextTurn, etc. can be inferred or left null if not critical for history
+            return mr;
+        }).collect(java.util.stream.Collectors.toList());
+        
+        response.setMoves(moveResponses);
+        return response;
     }
 
     // =========================
@@ -159,5 +177,14 @@ public class GameService {
 
         game.setFinishedAt(LocalDateTime.now());
         gameRepo.save(game);
+
+        // Broadcast Resignation
+        MoveResponse res = new MoveResponse();
+        res.setGameId(gameId);
+        res.setFen(game.getFenCurrent()); // No change in FEN usually, or maybe update it?
+        res.setStatus(game.getStatus().name());
+        res.setNextTurn("NONE");
+        
+        messagingTemplate.convertAndSend("/topic/game/" + gameId, res);
     }
 }

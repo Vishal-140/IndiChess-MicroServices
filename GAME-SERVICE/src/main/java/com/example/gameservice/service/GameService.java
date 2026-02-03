@@ -7,6 +7,7 @@ import com.example.gameservice.repo.GameRepo;
 import com.example.gameservice.repo.MoveRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.time.LocalDateTime;
 
@@ -16,6 +17,7 @@ public class GameService {
 
     private final GameRepo gameRepo;
     private final MoveRepo moveRepo;
+    private final SimpMessagingTemplate messagingTemplate;
 
     // =================================================
     // CALLED BY MATCHMAKING (FEIGN)
@@ -124,6 +126,9 @@ public class GameService {
         res.setBlackTime(game.getBlackTime());
         res.setNextTurn(isWhiteTurn ? "BLACK" : "WHITE");
         res.setStatus(game.getStatus().name());
+
+        // Broadcast move to subscribers
+        messagingTemplate.convertAndSend("/topic/game/" + gameId, res);
 
         return res;
     }

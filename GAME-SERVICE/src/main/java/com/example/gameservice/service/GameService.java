@@ -97,12 +97,22 @@ public class GameService {
         move.setColor(isWhiteTurn ? PieceColor.WHITE : PieceColor.BLACK);
         move.setUci(request.getUci());
         move.setFenBefore(game.getFenCurrent());
-        move.setFenAfter(game.getFenCurrent()); // engine later
+        String newFen = com.example.gameservice.logic.GameEngine.applyMove(game.getFenCurrent(), request.getUci());
+        move.setFenAfter(newFen);
 
         moveRepo.save(move);
 
         game.setCurrentPly(move.getPly());
+        game.setFenCurrent(newFen);
         game.setLastMoveUci(move.getUci());
+        
+        // Update Game Status (Checkmate/Stalemate)
+        GameStatus status = com.example.gameservice.logic.GameEngine.getGameStatus(newFen);
+        game.setStatus(status);
+        if (status != GameStatus.IN_PROGRESS) {
+            game.setFinishedAt(LocalDateTime.now());
+        }
+        
         gameRepo.save(game);
 
         MoveResponse res = new MoveResponse();

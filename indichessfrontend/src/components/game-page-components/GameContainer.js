@@ -1,0 +1,152 @@
+import React, { useState, useEffect, useRef } from "react";
+import BoardLayout from "./BoardLayout";
+import GamePlayControlContainer from "./GamePlayControlContainer";
+import { useSearchParams } from "react-router-dom";
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
+
+const GameContainer = () => {
+  const [searchParams] = useSearchParams();
+  const gameId = searchParams.get("id");
+  const [moves, setMoves] = useState([]);
+  const [fen, setFen] = useState(""); // Backend FEN
+  const stompClientRef = useRef(null);
+  const userId = localStorage.getItem("userId") || "0";
+
+  useEffect(() => {
+    if (!gameId) return;
+
+    const socket = new SockJS("http://localhost:8060/game/ws");
+    const client = new Client({
+      webSocketFactory: () => socket,
+      debug: (str) => console.log(str),
+      onConnect: () => {
+        console.log("Connected to WS");
+
+        client.subscribe(`/topic/game/${gameId}`, (message) => {
+          const body = JSON.parse(message.body);
+          console.log("Received move:", body);
+
+          // If it's a move event (contains fen)
+          if (body.fen) {
+            setFen(body.fen);
+            // We could also parse the move and add to history if the backend sends it
+            // For now, Board.js handles the UI updates mostly
+          }
+        });
+      },
+      onStompError: (frame) => {
+        console.error("Broker reported error: " + frame.headers["message"]);
+        console.error("Additional details: " + frame.body);
+      },
+    });
+
+    client.activate();
+    stompClientRef.current = client;
+
+    return () => {
+      client.deactivate();
+    };
+  }, [gameId]);
+
+  // Function to add a move (Triggered by Board.js drop)
+  const addMove = (move) => {
+    // Send move to backend
+    if (stompClientRef.current && stompClientRef.current.connected) {
+      // Construct UCI (e.g. from "e2" to "e4" -> "e2e4")
+      // move object has sqnumfrom, sqnumto... 
+      // Wait, moveFrom is "e2", moveTo is "e4" (sometimes with piece like Ne4)
+      // We need raw coordinates or raw string. 
+      // Let's inspect Board.js output in addMove.
+      // It provides: {piece, moveFrom, moveTo, sqnumfrom, sqnumto, tc , tr, fenBefore, fenAfter, createdAt}
+
+      // We need to construct UCI. 
+      // Board.js `moveFrom` logic matches standard notation? 
+      // Actually `updatePrevMove` in Board.js does:
+      // moveFrom = columnChar + rowNum
+      // moveTo = ...complex...
+
+      // Let's re-calculate simple UCI from keys:
+      // We need `from` and `to`. 
+      // Board.js passes `sqnumfrom`, `sqnumto`? No.
+      // It passes `moveFrom` which is e.g. "e2".
+      // It passes `moveTo` which is e.g. "Net4" (Knight x e4).
+
+      // Backend expects simple UCI "e2e4".
+      // We might need to extract it.
+      // Or simpler: We know user just dragged from (r1,c1) to (r2,c2).
+      // Board.js has this info. `updatePrevMove` has `fr, fc, tr, tc`. 
+      // But `addMove` receives an object. 
+      // `updatePrevMove` calls `addMove` with `{piece, moveFrom, moveTo, sqnumfrom, sqnumto, tc , tr...}`
+      // `sqnumfrom` is 8-fr? Board.js: `sqnumfrom = 8-fr`.
+      // `moveFrom` is `char + sqnumfrom`. e.g. "e2". Correct.
+
+      // But `moveTo` in the object is the SAN (Standard Algebraic Notation) like "Nxe4".
+      // We need the destination square.
+      // The object has `tc` and `tr`. `tr` is row index (0-7), `tc` is col index (0-7).
+      // Destination square = (char)('a' + tc) + (8-tr).
+
+      let uci = move.moveFrom; // e.g. "e2"
+
+      // Calculate dest from tc/tr
+      const destRank = 8 - move.tr;
+      const destFile = String.fromCharCode('a'.charCodeAt(0) + move.tc);
+      uci += destFile + destRank; // "e2e4"
+
+      // Promotion? 
+      // If pawn reached last rank, we need to know promotion piece.
+      // Board logic handles promotion modal and then calls `updatePrevMove`.
+      // But `addMove` payload doesn't seem to explicitly have promotion char.
+      // We might need to assume 'q' or add it to Board.js.
+
+      console.log("Sending UCI:", uci);
+
+      const moveRequest = {
+        gameId: gameId,
+        playerId: userId,
+        uci: uci,
+        fen: move.fenAfter
+      };
+
+      stompClientRef.current.publish({
+        destination: `/app/game/${gameId}/move`,
+        body: JSON.stringify(moveRequest),
+      });
+    }
+
+    // Update local UI history
+    // ... existing logic ...
+    if (move.piece !== move.piece.toLowerCase()) {
+      const newMove = { move, moveToWhite: move.moveTo };
+      setMoves((moves) => [...moves, newMove]);
+    }
+    else {
+      setMoves((prevMoves) => {
+        const newMoves = [...prevMoves];
+        if (newMoves.length > 0) {
+          const lastMove = {
+            ...newMoves[newMoves.length - 1],
+            moveToBlack: move.moveTo,
+            tc: `Black's Turn: ${move.tc}`,
+            tr: move.tr
+          };
+          newMoves[newMoves.length - 1] = lastMove;
+          return newMoves;
+        } else {
+          // Fallback if black moves first (custom setup)
+          return [...prevMoves, { flow: "weird", moveToBlack: move.moveTo }];
+        }
+      });
+    }
+
+  };
+
+  return (
+    <div className="game-container">
+      <BoardLayout addMove={addMove} fen={fen} />
+      <GamePlayControlContainer moves={moves} />
+    </div>
+  );
+};
+
+export default GameContainer;

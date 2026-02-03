@@ -13,8 +13,40 @@ const GameContainer = () => {
   const stompClientRef = useRef(null);
   const userId = localStorage.getItem("userId") || "0";
 
+  const [userColor, setUserColor] = useState(null); // 'w' or 'b'
+
   useEffect(() => {
     if (!gameId) return;
+
+    // Fetch Game Details to determine color
+    const fetchGameDetails = async () => {
+      try {
+        const response = await fetch(`http://localhost:8060/games/${gameId}`, {
+          headers: { "X-USER-ID": userId },
+          credentials: "include"
+        });
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Game details:", data);
+          // data.player1Id is White, data.player2Id is Black
+          if (String(data.player1Id) === String(userId)) {
+            setUserColor('w');
+            console.log("I am WHITE");
+          } else if (String(data.player2Id) === String(userId)) {
+            setUserColor('b');
+            console.log("I am BLACK");
+          } else {
+            console.log("I am SPECTATOR");
+            setUserColor('spectator');
+          }
+          if (data.fenCurrent) setFen(data.fenCurrent);
+        }
+      } catch (e) {
+        console.error("Failed to fetch game details", e);
+      }
+    };
+
+    fetchGameDetails();
 
     const socket = new SockJS("http://localhost:8060/game/ws");
     const client = new Client({
@@ -30,11 +62,8 @@ const GameContainer = () => {
           const body = JSON.parse(message.body);
           console.log("Received move:", body);
 
-          // If it's a move event (contains fen)
           if (body.fen) {
             setFen(body.fen);
-            // We could also parse the move and add to history if the backend sends it
-            // For now, Board.js handles the UI updates mostly
           }
         });
       },
@@ -50,7 +79,7 @@ const GameContainer = () => {
     return () => {
       client.deactivate();
     };
-  }, [gameId]);
+  }, [gameId, userId]);
 
   // Function to add a move (Triggered by Board.js drop)
   const addMove = (move) => {
@@ -147,7 +176,7 @@ const GameContainer = () => {
 
   return (
     <div className="game-container">
-      <BoardLayout addMove={addMove} fen={fen} />
+      <BoardLayout addMove={addMove} fen={fen} userColor={userColor} />
       <GamePlayControlContainer moves={moves} />
     </div>
   );

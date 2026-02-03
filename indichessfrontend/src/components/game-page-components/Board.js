@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, use } from "react";
 import "../component-styles/Board.css";  // Importing CSS file
 import PromotionModal from "../game-page-components/PromotionModal"
 
-const Board = ({ addMove, fen }) => {
+const Board = ({ addMove, fen, userColor }) => {
   const [boardSize, setBoardSize] = useState(500); // Initial size of the board
   const [board, setBoard] = useState([
     ["r", "n", "b", "q", "k", "b", "n", "r"],
@@ -18,6 +18,7 @@ const Board = ({ addMove, fen }) => {
   const [isSquareSelected, setIsSquareSelected] = useState(false);
   const [validMoves, setValidMoves] = useState([]);
   const [isWhiteTurn, setIsWhiteTurn] = useState(true);
+
 
   // piece, prow, pcol, arow, acol
   const [allMoves, setAllMoves] = useState([]);
@@ -517,6 +518,12 @@ const Board = ({ addMove, fen }) => {
       return;
     }
     if (!piece || (isWhiteTurn && !isUpperCase(piece)) || (!isWhiteTurn && isUpperCase(piece))) return;
+
+    // Enforce Player Color
+    if (userColor === 'w' && !isUpperCase(piece)) return;
+    if (userColor === 'b' && isUpperCase(piece)) return;
+    if (userColor !== 'w' && userColor !== 'b') return;
+
     setIsSquareSelected(true);
     setSelectedSquare([row, col]);
     setValidMoves(filterFromAllMoves(piece, row, col));
@@ -524,6 +531,12 @@ const Board = ({ addMove, fen }) => {
 
   const handleDragStart = (e, row, col) => {
     const piece = board[row][col];
+
+    // Enforce Player Color
+    if (userColor === 'w' && !isUpperCase(piece)) return;
+    if (userColor === 'b' && isUpperCase(piece)) return;
+    if (userColor !== 'w' && userColor !== 'b') return;
+
     if (!piece || (isWhiteTurn && !isUpperCase(piece)) || (!isWhiteTurn && isUpperCase(piece))) return;
     setIsSquareSelected(true);
     setSelectedSquare([row, col]);

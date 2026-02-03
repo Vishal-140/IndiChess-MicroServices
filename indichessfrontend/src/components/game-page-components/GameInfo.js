@@ -46,7 +46,8 @@ const GameInfo = ({ streak }) => {
         method: 'POST',
         headers: {
           'X-USER-ID': getUserId()
-        }
+        },
+        credentials: 'include'
       });
     } catch (error) {
       console.error("Error cancelling search:", error);
@@ -76,7 +77,8 @@ const GameInfo = ({ streak }) => {
           method: 'GET',
           headers: {
             'X-USER-ID': userId
-          }
+          },
+          credentials: 'include'
         });
 
         if (response.ok) {
@@ -121,8 +123,15 @@ const GameInfo = ({ streak }) => {
         headers: {
           'Content-Type': 'application/json',
           'X-USER-ID': userId
-        }
+        },
+        credentials: 'include'
       });
+
+      if (response.status === 401) {
+        localStorage.removeItem("userId");
+        window.location.href = "/";
+        return;
+      }
 
       if (response.ok) {
         const result = await response.json();

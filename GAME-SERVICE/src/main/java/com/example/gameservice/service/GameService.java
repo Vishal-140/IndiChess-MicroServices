@@ -86,7 +86,14 @@ public class GameService {
         Long expectedPlayer =
                 isWhiteTurn ? game.getPlayer1Id() : game.getPlayer2Id();
 
+        System.out.println("Processing Move: userId=" + userId 
+             + ", gameId=" + gameId 
+             + ", ply=" + game.getCurrentPly() 
+             + ", isWhiteTurn=" + isWhiteTurn 
+             + ", expectedPlayer=" + expectedPlayer);
+
         if (!userId.equals(expectedPlayer)) {
+            System.err.println("Move REJECTED: Not user's turn.");
             throw new RuntimeException("Not your turn");
         }
 

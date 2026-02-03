@@ -42,18 +42,24 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         }
 
         // 2️⃣ Authorization header
-        String header = exchange.getRequest()
-                .getHeaders()
-                .getFirst(authHeader);
+        String token = null;
+        String header = exchange.getRequest().getHeaders().getFirst(authHeader);
 
-        if (header == null || !header.startsWith(prefix + " ")) {
-            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-            return exchange.getResponse().setComplete();
+        if (header != null && header.startsWith(prefix + " ")) {
+             token = header.substring((prefix + " ").length());
+        } else {
+             // 3️⃣ Cookie fallback
+             if (exchange.getRequest().getCookies().containsKey("JWT")) {
+                 token = exchange.getRequest().getCookies().getFirst("JWT").getValue();
+             }
+        }
+        
+        if (token == null) {
+              exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+              return exchange.getResponse().setComplete();
         }
 
-        String token = header.substring((prefix + " ").length());
-
-        // 3️⃣ Validate token
+        // 4️⃣ Validate token
         if (!jwtUtil.isTokenValid(token)) {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();

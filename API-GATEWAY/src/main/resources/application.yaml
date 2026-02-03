@@ -33,12 +33,15 @@ spring:
             - Path=/game/ws/**
           filters:
             - StripPrefix=1
+            - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
 
         # GAME SERVICE - REST (No StripPrefix, map /games/** -> /games/**)
         - id: game-service-rest
           uri: lb://GAME-SERVICE
           predicates:
             - Path=/game/**,/games/**
+          filters:
+            - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
 
 eureka:
   client:

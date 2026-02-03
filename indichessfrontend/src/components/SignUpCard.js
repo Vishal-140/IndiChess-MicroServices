@@ -14,7 +14,7 @@ function SignupCard({ handleToggleSignup }) {
 
     try {
       // Send signup request to backend
-      const response = await axios.post("http://localhost:8080/signup", {
+      const response = await axios.post("http://localhost:8060/signup", {
         username,
         emailId,
         password,
@@ -113,7 +113,7 @@ function SignupCard({ handleToggleSignup }) {
       </form>
 
       <div className="login-link">
-        Already an existing user? 
+        Already an existing user?
         <button className="simple-auth-btn" onClick={handleToggleSignup}>Login</button>
       </div>
     </div>

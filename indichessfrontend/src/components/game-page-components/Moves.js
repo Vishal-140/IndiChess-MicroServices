@@ -10,7 +10,7 @@ const Moves = ({ moves }) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(move),
-      credentials : 'include'
+      credentials: 'include'
     })
       .then(response => response.json())
       .then(data => console.log("Move submitted:", data))
@@ -36,12 +36,12 @@ const Moves = ({ moves }) => {
         uci: uci,
         san: san,
         fenBefore: lastMove.fenBefore,
-        fenAfter: lastMove.fenAfter,   
+        fenAfter: lastMove.fenAfter,
         createdAt: new Date().toISOString(),  // Date when the move was created
       };
 
       // Call the function to send the move to the server
-      sendMoveToServer(move);
+      // sendMoveToServer(move); // DISABLE: WebSocket already handles moves, and this endpoint is wrong/redundant
     }
   }, [moves]); // Dependency on `moves` array
 

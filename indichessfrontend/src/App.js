@@ -7,14 +7,28 @@ import './App.css';
 import Game from "./pages/Game";
 
 
+import { RequireAuth, RedirectIfAuthenticated } from "./components/auth/AuthWrapper";
+
 function App() {
   return (
     <Router>
       <Routes>
-      <Route path="/" element={<HomeCard />} />
-      <Route path="/home" element={<HomePage />} />
-      <Route path="/game" element={<Game />} />
-      </Routes> 
+        <Route path="/" element={
+          <RedirectIfAuthenticated>
+            <HomeCard />
+          </RedirectIfAuthenticated>
+        } />
+        <Route path="/home" element={
+          <RequireAuth>
+            <HomePage />
+          </RequireAuth>
+        } />
+        <Route path="/game" element={
+          <RequireAuth>
+            <Game />
+          </RequireAuth>
+        } />
+      </Routes>
     </Router>
   );
 }

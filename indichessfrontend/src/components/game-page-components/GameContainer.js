@@ -19,6 +19,9 @@ const GameContainer = () => {
     const socket = new SockJS("http://localhost:8060/game/ws");
     const client = new Client({
       webSocketFactory: () => socket,
+      connectHeaders: {
+        "X-USER-ID": userId,
+      },
       debug: (str) => console.log(str),
       onConnect: () => {
         console.log("Connected to WS");
@@ -110,6 +113,7 @@ const GameContainer = () => {
 
       stompClientRef.current.publish({
         destination: `/app/game/${gameId}/move`,
+        headers: { "X-USER-ID": userId },
         body: JSON.stringify(moveRequest),
       });
     }

@@ -7,12 +7,12 @@ function HomeCard() {
   const [showSignup, setShowSignup] = useState(false); // Track if we need to show SignupCard
   const [isAuthenticated, setIsAuthenticated] = useState(false); // To track authentication status
   const navigate = useNavigate(); // For navigation (redirecting to home)
-  
+
   // Check if the user is already authenticated on component mount
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await fetch("http://localhost:8080/home", {
+        const response = await fetch("http://localhost:8060/home", {
           method: "GET",
           credentials: "include",
         });

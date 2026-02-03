@@ -8,12 +8,22 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="SERVICE-REGISTRY" />
-        <module name="GAME-SERVICE" />
-        <module name="API-GATEWAY" />
-        <module name="MATCHMAKING-SERVICE" />
         <module name="USER-SERVICE" />
       </profile>
+      <profile name="Annotation profile for MATCHMAKING-SERVICE" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.30/lombok-1.18.30.jar" />
+        </processorPath>
+        <module name="MATCHMAKING-SERVICE" />
+        <module name="GAME-SERVICE" />
+      </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="API-GATEWAY" target="21" />
+    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
@@ -22,6 +32,7 @@
       <module name="MATCHMAKING-SERVICE" options="-parameters" />
       <module name="SERVICE-REGISTRY" options="-parameters" />
       <module name="USER-SERVICE" options="-parameters" />
+      <module name="api-gateway" options="-parameters" />
     </option>
   </component>
 </project>

@@ -26,7 +26,16 @@ spring:
             - Path=/matchmaking/**
 
         # GAME SERVICE
-        - id: game-service
+        # GAME SERVICE - WEBSOCKET (StripPrefix to map /game/ws -> /ws)
+        - id: game-service-ws
+          uri: lb://GAME-SERVICE
+          predicates:
+            - Path=/game/ws/**
+          filters:
+            - StripPrefix=1
+
+        # GAME SERVICE - REST (No StripPrefix, map /games/** -> /games/**)
+        - id: game-service-rest
           uri: lb://GAME-SERVICE
           predicates:
             - Path=/game/**,/games/**

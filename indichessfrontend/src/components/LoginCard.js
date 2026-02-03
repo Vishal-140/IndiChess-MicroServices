@@ -14,11 +14,11 @@ function LoginCard({ handleToggleSignup }) {
 
     try {
       // Send login request to backend
-      const response = await axios.post("https://localhost:8080/login", {
+      const response = await axios.post("http://localhost:8060/login", {
         username,
         password,
         withCredentials: true
-        
+
       });
 
       // If login is successful, redirect to home
@@ -27,7 +27,7 @@ function LoginCard({ handleToggleSignup }) {
         console.log(response);
         navigate("/home");
       }
-      else{
+      else {
         console.log("Not Auth");
       }
     } catch (err) {
@@ -70,16 +70,11 @@ function LoginCard({ handleToggleSignup }) {
       </form>
 
       <div className="oauth-buttons">
-        <a href="http://localhost:8080/oauth2/authorization/google">
-          <button className="btn-google">Login with Google</button>
-        </a>
-        <a href="http://localhost:8080/oauth2/authorization/github">
-          <button className="btn-github">Login with GitHub</button>
-        </a>
+        {/* OAuth skipped for local setup */}
       </div>
 
       <div className="signup-link">
-        Not an existing user? 
+        Not an existing user?
         <button className="simple-auth-btn" onClick={handleToggleSignup}>Sign up here</button>
       </div>
     </div>

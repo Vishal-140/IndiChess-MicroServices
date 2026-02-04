@@ -131,8 +131,53 @@ public class GameService {
         game.setFenCurrent(newFen);
         game.setLastMoveUci(move.getUci());
         
-        // Update Game Status (Checkmate/Stalemate)
-        GameStatus status = com.example.gameservice.logic.GameEngine.getGameStatus(newFen);
+        // --- TIME MANAGEMENT ---
+        if (game.getGameType() != GameType.STANDARD) { // Assuming STANDARD has no timer or handled differently
+            long elapsedSeconds = java.time.Duration.between(game.getLastMoveTimestamp(), LocalDateTime.now()).toSeconds();
+            
+            // Note: The one who JUST moved (userId) was thinking. Subtract from them.
+            if (userId.equals(game.getPlayer1Id())) { // White moved
+                int newTime = (int) (game.getWhiteTime() - elapsedSeconds);
+                if (game.getGameType() == GameType.BLITZ) newTime += 2; // Increment 3|2
+                game.setWhiteTime(Math.max(0, newTime));
+
+                if (newTime <= 0) {
+                     game.setStatus(GameStatus.BLACK_WON); // White flag fall
+                     System.out.println("TIMEOUT: White ran out of time");
+                }
+            } else { // Black moved
+                int newTime = (int) (game.getBlackTime() - elapsedSeconds);
+                if (game.getGameType() == GameType.BLITZ) newTime += 2; // Increment
+                game.setBlackTime(Math.max(0, newTime));
+
+                if (newTime <= 0) {
+                    game.setStatus(GameStatus.WHITE_WON); // Black flag fall
+                    System.out.println("TIMEOUT: Black ran out of time");
+                }
+            }
+            game.setLastMoveTimestamp(LocalDateTime.now());
+        }
+        
+        // --- DRAW CHECKS ---
+        // Fetch history for 3-fold repetition
+        // Optimize: we only strictly need list of FENs.
+        // We can limit fetch if performance is concern, but for chess game (<200 moves) it's fine.
+        java.util.List<Move> history = moveRepo.findByGameIdOrderByPlyAsc(gameId);
+        // We need list of Strings (FENs)
+        java.util.List<String> historyFens = history.stream()
+                .map(Move::getFenAfter) // Use post-move FENs to check repetition of resulting position
+                .collect(java.util.stream.Collectors.toList());
+        // Also add the START_FEN if it's not in moves?
+        // Actually Repetition checks positions after moves. 
+        // Initial position is relevant too. Let's add Start FEN if Ply 0.
+        // But simpler: just use move history for now as most repetitions happen mid-game. 
+        // Ideally we should include "fenBefore" of first move or just "game start fen".
+        // Let's add basic start fen if needed.
+        // For standard game:
+        historyFens.add(0, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+
+        // Update Game Status (Checkmate/Stalemate/Draws)
+        GameStatus status = com.example.gameservice.logic.GameEngine.getGameStatus(newFen, historyFens);
         game.setStatus(status);
         if (status != GameStatus.IN_PROGRESS) {
             game.setFinishedAt(LocalDateTime.now());
@@ -186,5 +231,57 @@ public class GameService {
         res.setNextTurn("NONE");
         
         messagingTemplate.convertAndSend("/topic/game/" + gameId, res);
+    }
+
+    // =========================
+    // DRAW OFFER
+    // =========================
+    public void offerDraw(Long gameId, Long userId) {
+        // Validate game exists and user is part of it
+        Game game = gameRepo.findById(gameId)
+                .orElseThrow(() -> new RuntimeException("Game not found"));
+        
+        if (game.getStatus() != GameStatus.IN_PROGRESS) return;
+
+        // Broadcast Draw Offer
+        MoveResponse res = new MoveResponse();
+        res.setGameId(gameId);
+        res.setFen(game.getFenCurrent()); 
+        res.setStatus(game.getStatus().name());
+        res.setDrawOfferBy(String.valueOf(userId)); // Signal that this user offered draw
+        
+        messagingTemplate.convertAndSend("/topic/game/" + gameId, res);
+    }
+
+    public void respondDraw(Long gameId, Long userId, boolean accept) {
+         Game game = gameRepo.findById(gameId)
+                .orElseThrow(() -> new RuntimeException("Game not found"));
+         
+         if (game.getStatus() != GameStatus.IN_PROGRESS) return;
+
+         if (accept) {
+             game.setStatus(GameStatus.DRAW);
+             game.setFinishedAt(LocalDateTime.now());
+             gameRepo.save(game);
+             
+             MoveResponse res = new MoveResponse();
+             res.setGameId(gameId);
+             res.setFen(game.getFenCurrent());
+             res.setStatus("DRAW"); // Or GameStatus.DRAW.name()
+             res.setDrawOfferBy(null); // Clear offer
+             
+             messagingTemplate.convertAndSend("/topic/game/" + gameId, res);
+         } else {
+             // If rejected, maybe just notify? 
+             // Or simply clear the offer state on client by sending drawOfferBy = "REJECTED" or null?
+             // Let's send null or "REJECTED"
+             MoveResponse res = new MoveResponse();
+             res.setGameId(gameId);
+             res.setFen(game.getFenCurrent());
+             res.setStatus(game.getStatus().name());
+             res.setDrawOfferBy("REJECTED"); // Client interprets this to close modal
+             
+             messagingTemplate.convertAndSend("/topic/game/" + gameId, res);
+         }
     }
 }

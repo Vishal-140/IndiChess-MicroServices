@@ -68,13 +68,14 @@ public class MatchService {
 
                 return Optional.of(gameId);
             } catch (Exception e) {
-                // If game creation fails, rollback is complex in microservices. 
-                // For now, we assume it works or we might need a Saga.
-                // Or just fail this request.
-                // If we fail here, we should probably delete the match or mark it FAILED.
-                match.setStatus(MatchStatus.FINISHED); // Or ERROR
-                matchRepo.save(match);
-                throw new RuntimeException("Failed to create game", e);
+                // DISTRIBUTED TRANSACTION SAFETY:
+                // If Game Service fails (or network timeout), we MUST ensure the opponent is not lost from the queue.
+                // 1. We throw a RuntimeException to trigger Spring's @Transactional Rollback.
+                // 2. This rolls back the 'Match' creation and any 'MatchQueueEntry' changes (though delete is after this).
+                // 3. Result: Opponent remains in Queue, Match is not persisted.
+                // Note: If Game Service actually created the game but timed out, we have a orphan game there.
+                // A cleanup cron job on Game Service can remove games with no associated Match status if needed.
+                throw new RuntimeException("Failed to create game - Rolling back to preserve queue", e);
             }
         } else {
             // No opponent found -> Add to queue

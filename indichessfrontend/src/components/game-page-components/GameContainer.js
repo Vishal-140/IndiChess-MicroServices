@@ -13,6 +13,11 @@ const GameContainer = () => {
   const stompClientRef = useRef(null);
   const userId = localStorage.getItem("userId") || "0";
   const [statusMessage, setStatusMessage] = useState("Connecting...");
+  const [whiteTime, setWhiteTime] = useState(null);
+  const [blackTime, setBlackTime] = useState(null);
+  const [lastMoveTimestamp, setLastMoveTimestamp] = useState(null);
+  const [isWhiteTurn, setIsWhiteTurn] = useState(true);
+  const [drawOfferedBy, setDrawOfferedBy] = useState(null); // userId of offerer
 
   const [userColor, setUserColor] = useState(null); // 'w' or 'b'
 
@@ -42,20 +47,26 @@ const GameContainer = () => {
           }
           if (data.fenCurrent) setFen(data.fenCurrent);
 
-          // Set Initial Status
           if (data.status && data.status !== "IN_PROGRESS") {
             setStatusMessage(`Game Over: ${data.status}`);
           } else {
             const currentPly = data.currentPly || 0;
-            const isWhiteTurn = currentPly % 2 === 0;
+            const isWhiteTurnNow = currentPly % 2 === 0;
+            setIsWhiteTurn(isWhiteTurnNow);
+
             let msg = "Spectating";
             if (String(data.player1Id) === String(userId)) {
-              msg = isWhiteTurn ? "Your Turn" : "Opponent's Turn";
+              msg = isWhiteTurnNow ? "Your Turn" : "Opponent's Turn";
             } else if (String(data.player2Id) === String(userId)) {
-              msg = !isWhiteTurn ? "Your Turn" : "Opponent's Turn";
+              msg = !isWhiteTurnNow ? "Your Turn" : "Opponent's Turn";
             }
             setStatusMessage(msg);
           }
+
+          // Sync Timers
+          if (data.whiteTime !== undefined) setWhiteTime(data.whiteTime);
+          if (data.blackTime !== undefined) setBlackTime(data.blackTime);
+          if (data.lastMoveTimestamp) setLastMoveTimestamp(data.lastMoveTimestamp);
 
           // Restore Moves
           if (data.moves && Array.isArray(data.moves)) {
@@ -102,12 +113,29 @@ const GameContainer = () => {
               setStatusMessage(`Game Over: ${body.status}`);
             } else {
               const nextTurn = body.nextTurn; // "WHITE" or "BLACK"
+              setIsWhiteTurn(nextTurn === 'WHITE');
               if (userColor === 'w') {
                 setStatusMessage(nextTurn === 'WHITE' ? "Your Turn" : "Opponent's Turn");
               } else if (userColor === 'b') {
                 setStatusMessage(nextTurn === 'BLACK' ? "Your Turn" : "Opponent's Turn");
               }
             }
+
+            // Sync Time on Move
+            if (body.whiteTime !== undefined) setWhiteTime(body.whiteTime);
+            if (body.blackTime !== undefined) setBlackTime(body.blackTime);
+
+            // Draw Offer
+            if (body.drawOfferBy !== undefined) {
+              setDrawOfferedBy(body.drawOfferBy);
+            }
+            // If move happened, implicit reject? Usually backend clears it.
+            // If body.drawOfferBy is explicit "REJECTED" or null, we handle it.
+            if (body.ucc) { // Move happened
+              // Usually moves invalidate draw offers in chess logic, but let's rely on backend field
+            }
+
+            setLastMoveTimestamp(new Date().toISOString());
           }
         });
       },
@@ -225,7 +253,16 @@ const GameContainer = () => {
 
   return (
     <div className="game-container">
-      <BoardLayout addMove={addMove} fen={fen} userColor={userColor} statusMessage={statusMessage} />
+      <BoardLayout
+        addMove={addMove}
+        fen={fen}
+        userColor={userColor}
+        statusMessage={statusMessage}
+        whiteTime={whiteTime}
+        blackTime={blackTime}
+        lastMoveTimestamp={lastMoveTimestamp}
+        isWhiteTurn={isWhiteTurn}
+      />
       <GamePlayControlContainer moves={moves} />
     </div>
   );

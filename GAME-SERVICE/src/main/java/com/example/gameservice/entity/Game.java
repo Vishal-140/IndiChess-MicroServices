@@ -54,6 +54,9 @@ public class Game {
 
     private LocalDateTime updatedAt;
 
+    @Column(name = "last_move_timestamp")
+    private LocalDateTime lastMoveTimestamp;
+
     private static final String START_FEN =
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
@@ -74,6 +77,8 @@ public class Game {
             this.whiteTime = 600;
             this.blackTime = 600;
         }
+        
+        this.lastMoveTimestamp = LocalDateTime.now();
     }
 
     public Game() {}
@@ -82,6 +87,9 @@ public class Game {
     void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.startedAt = LocalDateTime.now();
+        if (this.lastMoveTimestamp == null) {
+            this.lastMoveTimestamp = LocalDateTime.now();
+        }
     }
 
     @PreUpdate

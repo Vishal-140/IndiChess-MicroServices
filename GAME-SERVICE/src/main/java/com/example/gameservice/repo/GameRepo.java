@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface GameRepo extends JpaRepository<Game, Long> {
+    java.util.List<Game> findByStatus(com.example.gameservice.entity.GameStatus status);
 }

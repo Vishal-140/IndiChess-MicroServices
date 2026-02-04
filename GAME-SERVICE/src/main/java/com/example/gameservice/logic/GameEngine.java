@@ -116,10 +116,11 @@ public class GameEngine {
         return board.toFenWithNextTurn(); 
     }
     
-    public static com.example.gameservice.entity.GameStatus getGameStatus(String fen) {
+    public static com.example.gameservice.entity.GameStatus getGameStatus(String fen, java.util.List<String> historyFens) {
         ChessBoard board = new ChessBoard(fen);
         PieceColor activeColor = board.getActiveColor();
         
+        // 1. Checkmate / Stalemate
         boolean inCheck = MoveValidator.isKingInCheck(board, activeColor);
         boolean hasMoves = MoveValidator.hasAnyLegalMove(board, activeColor);
         
@@ -133,6 +134,94 @@ public class GameEngine {
             return com.example.gameservice.entity.GameStatus.DRAW; // Stalemate
         }
         
+        // 2. Insufficient Material
+        if (isInsufficientMaterial(board)) {
+            return com.example.gameservice.entity.GameStatus.DRAW;
+        }
+        
+        // 3. 50-Move Rule
+        if (board.getHalfMoveClock() >= 100) {
+            return com.example.gameservice.entity.GameStatus.DRAW;
+        }
+        
+        // 4. 3-Fold Repetition
+        if (checkRepetition(fen, historyFens)) {
+            return com.example.gameservice.entity.GameStatus.DRAW;
+        }
+        
         return com.example.gameservice.entity.GameStatus.IN_PROGRESS;
+    }
+    
+    // Legacy support if needed, but we should migrate calls
+    public static com.example.gameservice.entity.GameStatus getGameStatus(String fen) {
+        return getGameStatus(fen, java.util.Collections.emptyList());
+    }
+
+    private static boolean isInsufficientMaterial(ChessBoard board) {
+        int whitePieces = 0;
+        int blackPieces = 0;
+        int whiteBishops = 0; // or Knights
+        int blackBishops = 0; // or Knights
+        
+        for (int r = 0; r < 8; r++) {
+            for (int f = 0; f < 8; f++) {
+                ChessPiece p = board.getPiece(r, f);
+                if (p == null) continue;
+                
+                if (p.getType() == ChessPiece.Type.PAWN || 
+                    p.getType() == ChessPiece.Type.ROOK || 
+                    p.getType() == ChessPiece.Type.QUEEN) {
+                    return false; // Pawns, Rooks, Queens are sufficient
+                }
+                
+                if (p.getColor() == PieceColor.WHITE) {
+                    if (p.getType() != ChessPiece.Type.KING) {
+                        whitePieces++;
+                        whiteBishops++; // Count minor pieces
+                    }
+                } else {
+                    if (p.getType() != ChessPiece.Type.KING) {
+                        blackPieces++;
+                        blackBishops++; // Count minor pieces
+                    }
+                }
+            }
+        }
+        
+        // K vs K
+        if (whitePieces == 0 && blackPieces == 0) return true;
+        
+        // K + Minor vs K
+        if ((whitePieces == 1 && blackPieces == 0) || (whitePieces == 0 && blackPieces == 1)) return true;
+        
+        // K + B vs K + B (same color bishops) - simplified: just treat K+Minor vs K+Minor as insufficient?
+        // Standard FIDE: K+B vs K+B is draw IF bishops are same color.
+        // For MVP simplicity: K+Minor vs K+Minor is OFTEN valid draw, but technically checkmate possible if opposing bishops?
+        // Let's stick to safe insufficient: K vs K, K+N vs K, K+B vs K.
+        // K+N vs K+N is NOT automatically insufficient (unlikely but matte possible).
+        
+        return false;
+    }
+    
+    private static boolean checkRepetition(String currentFen, java.util.List<String> historyFens) {
+        if (historyFens == null || historyFens.isEmpty()) return false;
+        
+        String currentKey = getFenRepetitionKey(currentFen);
+        int count = 1; // Current position counts as 1
+        
+        for (String f : historyFens) {
+            if (getFenRepetitionKey(f).equals(currentKey)) {
+                count++;
+            }
+        }
+        
+        return count >= 3;
+    }
+    
+    private static String getFenRepetitionKey(String fen) {
+        // Only Placement + Turn + Castling + EnPassant matters. Clocks do not.
+        String[] parts = fen.split(" ");
+        if (parts.length < 4) return fen;
+        return parts[0] + " " + parts[1] + " " + parts[2] + " " + parts[3];
     }
 }

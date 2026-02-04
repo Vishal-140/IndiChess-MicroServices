@@ -17,6 +17,7 @@ public class GameResponse {
     private String fen;
     private Integer whiteTime;
     private Integer blackTime;
+    private String lastMoveTimestamp;
 
     private List<MoveResponse> moves;
 
@@ -32,6 +33,7 @@ public class GameResponse {
         res.setFen(game.getFenCurrent());
         res.setWhiteTime(game.getWhiteTime());
         res.setBlackTime(game.getBlackTime());
+        res.setLastMoveTimestamp(game.getLastMoveTimestamp() != null ? game.getLastMoveTimestamp().toString() : null);
 
         return res;
     }

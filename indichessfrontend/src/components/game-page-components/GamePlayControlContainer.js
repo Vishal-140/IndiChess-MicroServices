@@ -5,16 +5,30 @@ import GamesPlayed from "./GamesPlayed"
 import Players from "./Players";
 import "../component-styles/GamePlayControlContainer.css";
 
-const GamePlayControlContainer = ({moves}) => {
+import { useNavigate } from "react-router-dom";
+
+const GamePlayControlContainer = ({ moves }) => {
   const [activeTab, setActiveTab] = useState("Analysis");
+  const navigate = useNavigate();
 
   // Handle tab selection
   const handleTabClick = (tab) => {
     setActiveTab(tab);
   };
 
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/");
+  };
+
   return (
     <div className="game-play-control-container">
+      {/* Navigation Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: '#222', borderBottom: '1px solid #444' }}>
+        <button onClick={() => navigate("/")} style={{ background: 'transparent', color: '#aaa', border: 'none', cursor: 'pointer' }}>Home</button>
+        <button onClick={handleLogout} style={{ background: 'transparent', color: '#faaa', border: 'none', cursor: 'pointer' }}>Logout</button>
+      </div>
+
       {/* Header Section with Tabs */}
       <div className="header">
         <div
@@ -45,7 +59,7 @@ const GamePlayControlContainer = ({moves}) => {
 
       {/* Content Section based on active tab */}
       <div className="content">
-        {activeTab === "Analysis" && <Analysis moves={moves}/>}
+        {activeTab === "Analysis" && <Analysis moves={moves} />}
         {activeTab === "NewGame" && <NewGame />}
         {activeTab === "Games" && <GamesPlayed />}
         {activeTab === "Players" && <Players />}

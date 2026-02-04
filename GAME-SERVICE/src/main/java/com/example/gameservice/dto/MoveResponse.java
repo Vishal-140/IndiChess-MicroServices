@@ -18,6 +18,9 @@ public class MoveResponse {
 
     private String nextTurn;    // WHITE / BLACK
     private String status;      // ONGOING / FINISHED
+    
+    // For Draw Offers
+    private String drawOfferBy; // "userId" or null
 
 
 }

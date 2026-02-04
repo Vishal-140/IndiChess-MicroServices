@@ -71,4 +71,23 @@ public class GameController {
     ) {
         return gameService.makeMove(gameId, userId, moveRequest);
     }
+
+    @PostMapping("/games/{gameId}/resign")
+    public void resign(@PathVariable Long gameId, @RequestHeader("X-USER-ID") Long userId) {
+        gameService.resign(gameId, userId);
+    }
+
+    @PostMapping("/games/{gameId}/draw-offer")
+    public void offerDraw(@PathVariable Long gameId, @RequestHeader("X-USER-ID") Long userId) {
+        gameService.offerDraw(gameId, userId);
+    }
+
+    @PostMapping("/games/{gameId}/draw-response")
+    public void respondDraw(
+            @PathVariable Long gameId,
+            @RequestHeader("X-USER-ID") Long userId,
+            @RequestParam boolean accept
+    ) {
+        gameService.respondDraw(gameId, userId, accept);
+    }
 }

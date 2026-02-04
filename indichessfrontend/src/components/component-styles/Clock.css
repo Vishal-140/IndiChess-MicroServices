@@ -1,0 +1,33 @@
+.chess-clock {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 1.5rem;
+  font-weight: bold;
+  padding: 10px 20px;
+  background-color: #333;
+  color: #fff;
+  border-radius: 8px;
+  border: 2px solid #555;
+  width: 100px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.chess-clock.active {
+  background-color: #ffffff;
+  color: #000;
+  border-color: #4CAF50;
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+}
+
+.chess-clock.low-time {
+  background-color: #ffebee;
+  color: #d32f2f;
+  border-color: #d32f2f;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}

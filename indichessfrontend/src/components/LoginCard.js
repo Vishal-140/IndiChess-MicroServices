@@ -23,9 +23,12 @@ function LoginCard({ handleToggleSignup }) {
 
       // If login is successful, redirect to home
       if (response && response.data) {
-        // Store userId for AuthWrapper
+        // Store userId and username for AuthWrapper and Header
         if (response.data.userId) {
           localStorage.setItem("userId", response.data.userId);
+        }
+        if (response.data.username) {
+          localStorage.setItem("username", response.data.username);
         }
 
         console.log(response);

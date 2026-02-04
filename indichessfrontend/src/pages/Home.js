@@ -1,22 +1,22 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import SideNav from "../components/SideNav";
 import Header from "../components/Header";
 import GameInfo from "../components/game-page-components/GameInfo";
+import "./Home.css"; // Global layout styles
 
 function HomePage() {
-  // console.log(Response);
   return (
     <div className="app-container">
-      <SideNav /> {/* Render the SideNav */}
-      <div className="main-container">
+      <SideNav />
+
+      <div className="main-content">
         <Header />
-        <div className="game-info-container">
+
+        <div className="content-wrapper">
           <GameInfo />
         </div>
       </div>
-      
     </div>
-    
   );
 }
 

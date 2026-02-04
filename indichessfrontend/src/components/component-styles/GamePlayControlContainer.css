@@ -1,73 +1,94 @@
 .game-play-control-container {
   width: 45%;
   height: 100%;
-  background-color: #3b2f2f; /* Dark wood-like background */
+  background-color: #3b2f2f;
+  /* Dark wood-like background */
   color: white;
   display: flex;
   flex-direction: column;
-  padding: 20px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
+/* Clean Header/Content styles from previous version can be simplified or overridden */
 
-.tab {
-  cursor: pointer;
-  padding: 10px 20px;
-  background-color: #563636; /* Tab background */
-  border-radius: 8px;
-  margin-right: 10px;
-  transition: background-color 0.3s ease;
-}
-
-.tab:hover {
-  background-color: #4f2f2f; /* Darker hover effect */
-}
-
-.tab.active {
-  background-color: #388e3c; /* Active tab background */
-}
-
-.content {
-  background-color: #2c2c2c; /* Slightly darker background for content */
-  padding: 20px;
-  border-radius: 10px;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.content h2 {
-  font-size: 24px;
+.moves-header {
+  border-bottom: 1px solid #444;
   margin-bottom: 10px;
+  padding-bottom: 5px;
 }
 
-.content button {
-  padding: 10px 15px;
-  margin-top: 10px;
-  background-color: #388e3c;
+.moves-list {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 20px;
+  background-color: #2c2c2c;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.moves-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.moves-table th {
+  text-align: left;
+  padding: 12px;
+  color: #aaa;
+  border-bottom: 2px solid #555;
+  position: sticky;
+  top: 0;
+  background-color: #2c2c2c;
+  /* Match container bg */
+  z-index: 10;
+}
+
+.moves-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #3d3d3d;
+}
+
+.move-number {
+  color: #666;
+  width: 30px;
+}
+
+.move-white,
+.move-black {
+  font-family: monospace;
+  font-size: 1rem;
+}
+
+.game-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: auto;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 12px;
   border: none;
   border-radius: 8px;
-  color: white;
+  font-weight: bold;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: opacity 0.2s;
 }
 
-.content button:hover {
-  background-color: #2e7d32;
+.resign-btn {
+  background-color: #d32f2f;
+  color: white;
 }
 
-.content ul {
-  list-style-type: none;
-  padding: 0;
+.draw-btn {
+  background-color: #555;
+  color: white;
 }
 
-.content ul li {
-  margin: 10px 0;
-  background-color: #4f2f2f;
-  padding: 10px;
-  border-radius: 8px;
+.action-btn:hover {
+  opacity: 0.9;
 }

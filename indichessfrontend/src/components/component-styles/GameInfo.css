@@ -1,55 +1,198 @@
 .game-info {
-  background-color: #3b2f2f;  /* Dark wood-like background */
-  color: white;
-  height: 40%;
-  width: 40%;  /* Adjust width as necessary */
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  max-width: 800px;
+  /* Limit width for cleaner look */
+  margin: 0 auto;
   padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  color: var(--text-primary);
 }
 
-.streak {
+.streak-section {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 15px;
+  background: var(--bg-card);
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
   margin-bottom: 20px;
 }
 
-.streak p {
-  font-size: 14px;
-  margin: 0;
+.streak-icon {
+  color: #FF9800;
+  /* Orange fire */
 }
 
-.streak h3 {
-  font-size: 22px;
+.streak-text h3 {
   margin: 0;
-  font-weight: 600;
+  font-size: 1.5rem;
+  color: var(--text-primary);
 }
 
-.buttons {
+.streak-text p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* Game Mode Grid */
+.gamemode-grid {
+  display: flex;
+  /* Use Flexbox for better horizontal control on large screens */
+  flex-direction: row;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
+}
+
+.gamemode-card {
+  flex: 1;
+  /* Match widths */
+  background: linear-gradient(145deg, #1E1E1E, #252525);
+  /* Subtle gradient */
+  border: 1px solid #333;
+  /* Softer border */
+  border-radius: 16px;
+  /* Rounder corners */
+  padding: 30px 20px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  position: relative;
+  min-width: 150px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  /* Depth */
 }
 
-.button {
-  background-color: #563636; /* Darker button background */
-  color: white;
+.gamemode-card:hover {
+  background: var(--bg-hover);
+  border-color: var(--text-secondary);
+}
+
+.gamemode-card.selected {
+  border-color: var(--accent-green);
+  background: rgba(76, 175, 80, 0.05);
+  box-shadow: 0 0 15px rgba(76, 175, 80, 0.2);
+}
+
+.mode-icon {
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+.gamemode-card.selected .mode-icon {
+  color: var(--accent-green);
+}
+
+.mode-title {
+  font-weight: 700;
+  font-size: 1.4rem;
+  /* Larger title */
+  margin: 0;
+  color: #fff;
+  /* White title */
+}
+
+.mode-time {
+  font-size: 1.1rem;
+  color: var(--accent-green);
+  /* Green time for contrast */
+  font-weight: 500;
+}
+
+.mode-desc {
+  font-size: 0.9rem;
+  color: #B0B3B8;
+  /* Lighter grey for description */
+  margin-top: 5px;
+}
+
+/* Play Button Area */
+.play-action-area {
+  margin-top: 20px;
+}
+
+.play-btn {
+  width: 100%;
+  padding: 18px;
+  border-radius: 8px;
   border: none;
-  font-size: 16px;
-  padding: 10px;
+  font-size: 1.2rem;
+  font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  gap: 15px;
+  transition: all 0.2s;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.play-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.play-btn.start {
+  background-color: var(--accent-green);
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+}
+
+.play-btn.start:hover {
+  background-color: var(--accent-green-hover);
+  transform: translateY(-2px);
+}
+
+.play-btn.cancel {
+  background-color: var(--accent-red);
+  box-shadow: 0 4px 15px rgba(255, 77, 77, 0.4);
+}
+
+.play-btn.cancel:hover {
+  background-color: #e63939;
+}
+
+/* Searching State */
+.searching-status {
+  text-align: center;
+  margin-top: 20px;
+  padding: 20px;
+  background: var(--bg-card);
   border-radius: 8px;
-  transition: background-color 0.3s ease;
+  border: 1px solid var(--border-color);
+  animation: pulse 2s infinite;
 }
 
-.button:hover {
-  background-color: #4f2f2f;  /* Hover effect */
+.searching-status p {
+  margin: 5px 0;
+  color: var(--text-secondary);
 }
 
-.button svg {
-  margin-right: 10px; /* Adjust the space between the icon and text */
+@keyframes pulse {
+  0% {
+    border-color: var(--border-color);
+  }
+
+  50% {
+    border-color: var(--accent-green);
+  }
+
+  100% {
+    border-color: var(--border-color);
+  }
+}
+
+@media (max-width: 600px) {
+  .gamemode-grid {
+    flex-direction: column;
+    /* Stack on mobile */
+  }
 }

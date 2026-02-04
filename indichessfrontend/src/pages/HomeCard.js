@@ -18,9 +18,17 @@ function HomeCard() {
         });
 
         if (response.ok) {
-          // If authenticated, redirect to /home
-          setIsAuthenticated(true);
-          navigate("/home");  // Redirect to /home using useNavigate
+          // If authenticated, we MUST check if we have local storage userId.
+          if (localStorage.getItem("userId")) {
+            setIsAuthenticated(true);
+            navigate("/home");
+          } else {
+            // Zombie Cookie Case: Backend says OK, but Frontend has no user.
+            // We must logout to clear the cookie and stay here.
+            console.warn("Detected zombie cookie (Auth OK but no local user). Clearing...");
+            await fetch("http://localhost:8060/logout", { method: "POST", credentials: "include" });
+            setIsAuthenticated(false);
+          }
         } else {
           setIsAuthenticated(false);
         }

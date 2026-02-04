@@ -1,6 +1,3 @@
-
-
-
 .App-header {
   background-color: #282c34;
   min-height: 100vh;
@@ -13,9 +10,11 @@
 }
 
 /* Global Styles */
+/* Global Styles */
 body {
-  font-family: 'Arial', sans-serif;
-  background-color: #f4f4f9;
+  font-family: 'Inter', 'Segoe UI', 'Roboto', sans-serif;
+  background-color: var(--bg-app, #121212);
+  color: var(--text-primary, #ffffff);
   margin: 0;
   display: flex;
   justify-content: center;
@@ -25,70 +24,90 @@ body {
 
 h2 {
   font-size: 28px;
-  color: #333;
+  color: var(--text-primary, #fff);
   margin-bottom: 20px;
 }
 
 a {
   text-decoration: none;
-  color: #4CAF50;
+  color: var(--accent-green, #4CAF50);
 }
 
 a:hover {
   text-decoration: underline;
 }
 
-.home-card{
+.home-card {
   max-width: 400px;
+  width: 100%;
 }
 
-/* Styling the Login Card */
-.login-card {
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  padding: 30px;
+/* Styling the Login/Signup Card */
+.login-card,
+.signup-card {
+  background-color: var(--bg-card, #1e1e1e);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  padding: 40px;
   width: 100%;
   text-align: center;
+  border: 1px solid var(--border-color, #333);
 }
 
-.login-card .input-group {
+.login-card .input-group,
+.signup-card .input-group {
   margin-bottom: 20px;
+  text-align: left;
 }
 
 .input-group label {
   font-size: 14px;
-  color: #555;
+  color: var(--text-secondary, #aaa);
   display: block;
-  margin-bottom: 5px;
-  text-align: left;
+  margin-bottom: 8px;
 }
 
-.input-group input {
+.input-group input,
+.input-group select {
   width: 100%;
   padding: 12px;
   font-size: 16px;
-  border: 1px solid #ddd;
+  background-color: #2c2 c29;
+  /* Darker input bg */
+  background-color: var(--bg-hover, #2a2a2a);
+  border: 1px solid var(--border-color, #444);
   border-radius: 6px;
+  color: #fff;
   box-sizing: border-box;
+  transition: border-color 0.3s;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+  outline: none;
+  border-color: var(--accent-green, #4CAF50);
 }
 
 .simple-auth-btn {
   width: 100%;
-  padding: 12px;
+  padding: 14px;
   font-size: 16px;
-  background-color: #4CAF50;
+  font-weight: 600;
+  background-color: var(--accent-green, #4CAF50);
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.3s;
-  margin-bottom: 20px;
+  transition: background-color 0.3s, transform 0.1s;
+  margin-top: 10px;
 }
 
-
 .simple-auth-btn:hover {
-  background-color: #45a049;
+  background-color: #43a047;
+}
+
+.simple-auth-btn:active {
+  transform: scale(0.98);
 }
 
 .oauth-buttons {
@@ -98,91 +117,54 @@ a:hover {
   margin-bottom: 20px;
 }
 
-.oauth-buttons a {
-  text-decoration: none;
-}
-
-.oauth-buttons button {
-  width: 100%;
-  padding: 12px;
-  font-size: 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.btn-google {
-  background-color: #db4437;
-  color: white;
-}
-
-.btn-google:hover {
-  background-color: #c1351d;
-}
-
-.btn-github {
-  background-color: #333;
-  color: white;
-}
-
-.btn-github:hover {
-  background-color: #1b1b1b;
-}
-
-.signup-link {
+.signup-link,
+.login-link {
   font-size: 14px;
-  margin-top: 20px;
+  margin-top: 25px;
+  color: var(--text-secondary, #aaa);
+}
+
+.signup-link button,
+.login-link button {
+  background: none;
+  border: none;
+  color: var(--accent-green, #4CAF50);
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  margin-left: 5px;
+  text-decoration: underline;
+  width: auto;
+  display: inline;
 }
 
 .error-message {
-  color: red;
+  color: #ff5252;
   font-size: 14px;
   margin-top: 10px;
-}
-
-.signup-card {
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  padding: 30px;
-  width: 100%;
-  text-align: center;
-}
-
-.signup-card .input-group {
-  margin-bottom: 20px;
-}
-
-.login-link {
-  font-size: 14px;
-  margin-top: 20px;
-}
-
-.login-link .btn-login {
-  background-color: #4CAF50;
-  color: white;
-  padding: 10px 20px;
-  font-size: 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.login-link .btn-login:hover {
-  background-color: #45a049;
+  background: rgba(255, 82, 82, 0.1);
+  padding: 10px;
+  border-radius: 4px;
 }
 
 
 .board {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);  /* 8 columns */
-  grid-template-rows: repeat(8, 1fr);  /* 8 rows */
-  width: 400px;  /* Width of the board */
-  height: 400px;  /* Height of the board */
-  border: 4px solid #333;  /* Border around the chessboard */
+  grid-template-columns: repeat(8, 1fr);
+  /* 8 columns */
+  grid-template-rows: repeat(8, 1fr);
+  /* 8 rows */
+  width: 400px;
+  /* Width of the board */
+  height: 400px;
+  /* Height of the board */
+  border: 4px solid #333;
+  /* Border around the chessboard */
   border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);  /* Shadow for a 3D effect */
-  margin: 20px auto;  /* Center the board */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  /* Shadow for a 3D effect */
+  margin: 20px auto;
+  /* Center the board */
 }
 
 .square {
@@ -190,39 +172,51 @@ a:hover {
   align-items: center;
   justify-content: center;
   background-color: #fff;
-  transition: background-color 0.3s ease;  /* Smooth color transition */
+  transition: background-color 0.3s ease;
+  /* Smooth color transition */
   cursor: pointer;
 }
 
 .square:hover {
-  background-color: #f1f1f1;  /* Light gray hover effect */
+  background-color: #f1f1f1;
+  /* Light gray hover effect */
 }
 
 .white {
-  background-color: #f0d9b5;  /* Light tan for white squares */
+  background-color: #f0d9b5;
+  /* Light tan for white squares */
 }
 
 .black {
-  background-color: #b58863;  /* Dark brown for black squares */
+  background-color: #b58863;
+  /* Dark brown for black squares */
 }
 
 .piece {
   font-size: 2rem;
-  user-select: none;  /* Prevent text selection on drag */
+  user-select: none;
+  /* Prevent text selection on drag */
   cursor: pointer;
   transition: transform 0.3s ease;
 }
 
 .piece:active {
-  transform: scale(1.2);  /* Slightly enlarge the piece when clicked */
+  transform: scale(1.2);
+  /* Slightly enlarge the piece when clicked */
 }
 
 .game-container {
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  gap: 30px;
-  margin: 20px;
+  align-items: stretch;
+  /* Stretch children to full height */
+  gap: 20px;
+  height: 100%;
+  /* Fill parent */
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 .board {
@@ -269,60 +263,55 @@ a:hover {
   background-color: #45a049;
 }
 
-.app-container
-{
+.app-container {
   display: flex;
   width: 100vw;
   flex: content;
   /* align-items: flex-end; */
-    /* align-content: space-between;
+  /* align-content: space-between;
     justify-content: space-between;
     justify-items: end; */
 }
 
-.main-container{
+.main-container {
   display: flex;
   flex-direction: column;
   width: 100%;
 }
 
-.gameplay-container{
+.gameplay-container {
   height: 100%;
 }
 
-.game-info-container{
+.game-info-container {
   height: 100%;
   display: flex;
   align-content: center;
-  align-items: center; 
+  align-items: center;
   justify-content: center;
-  justify-items: center ;
+  justify-items: center;
 }
 
-.game-container{
+.game-container {
   height: 100%;
   display: flex;
-  
+
   /* flex-wrap: wrap; */
 }
 
-.moves{
+.moves {
   height: 40vh;
-  display: flex ;
+  display: flex;
   flex-direction: column;
   overflow-y: auto;
 }
 
-.moves-container{
+.moves-container {
   height: 100%;
   padding-bottom: 50px;
-  display: flex ;
+  display: flex;
   flex-direction: column;
-  align-items:  center;
-  justify-items: flex-start  ;
-  justify-content: space-between; 
+  align-items: center;
+  justify-items: flex-start;
+  justify-content: space-between;
 }
-
-
-
-

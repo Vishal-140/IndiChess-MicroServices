@@ -1,5 +1,5 @@
 .chessboard {
-  width: 100%; 
+  width: 100%;
   height: 0;
   position: relative;
   display: flex;
@@ -12,7 +12,8 @@
   justify-content: space-evenly;
   width: 100%;
   position: absolute;
-  top: -30px;  /* Adjust the position of X-axis labels */
+  top: -30px;
+  /* Adjust the position of X-axis labels */
   padding-left: 5%;
 }
 
@@ -40,7 +41,7 @@
 .row {
   display: flex;
   width: 100%;
-  height: 12.5%; 
+  height: 12.5%;
 }
 
 .square {
@@ -48,7 +49,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 350%;  
+  font-size: 350%;
   font-family: 'Arial', sans-serif;
   border: 1px solid #000;
   position: relative;
@@ -56,11 +57,13 @@
 }
 
 .light {
-  background-color: #f0d9b5; 
+  background-color: #F0D9B5;
+  /* Wood light */
 }
 
 .dark {
-  background-color: #b58863; 
+  background-color: #B58863;
+  /* Wood dark */
 }
 
 
@@ -68,22 +71,36 @@
   position: absolute;
   top: 50%;
   left: -20px;
-  transform: translateY(-50%); 
+  transform: translateY(-50%);
 }
 
 .valid-move-overlay {
   position: absolute;
-  background-color: rgba(0, 255, 0, 0.5); 
+  background-color: rgba(0, 255, 0, 0.5);
   width: 100%;
   height: 100%;
   border-radius: 5px;
-  pointer-events: none;  
+  pointer-events: none;
 }
 
 .square[draggable="true"] {
-  cursor: grab;  
+  cursor: grab;
 }
 
 .square[draggable="true"]:active {
-  cursor: grabbing;  
+  cursor: grabbing;
+}
+
+.chess-piece {
+  font-weight: bold;
+  user-select: none;
+}
+
+.piece-white {
+  color: #fff;
+  text-shadow: 1px 1px 2px #000;
+}
+
+.piece-black {
+  color: #000;
 }

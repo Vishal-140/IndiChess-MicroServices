@@ -48,8 +48,15 @@ const Board = ({ addMove, fen, userColor }) => {
 
   // Handle window resize
   const updateBoardSize = () => {
-    const size = Math.min(window.innerWidth, window.innerHeight) * 0.6;  // 60% of the viewport size
-    setBoardSize(size);
+    // Calculate available height/width
+    // Header (60px) + Top Bar (50px) + Bottom Bar (50px) + Margins (~40px) = ~200px
+    // Using 220px to be safe but maximize size
+    const availableHeight = window.innerHeight - 220;
+    const availableWidth = (window.innerWidth - 300) * 0.65; // Slightly more width share
+
+    // Use the smaller dimension to ensure it fits without scrolling or overlapping
+    const size = Math.min(availableWidth, availableHeight);
+    setBoardSize(Math.max(300, size)); // Ensure min size
   };
 
   useEffect(() => {
@@ -109,6 +116,14 @@ const Board = ({ addMove, fen, userColor }) => {
       default: return '';
     }
   };
+
+  // Helper to determine piece color class
+  const getPieceColorClass = (piece) => {
+    if (!piece) return "";
+    return piece === piece.toUpperCase() ? "piece-white" : "piece-black";
+  };
+
+
 
   function isUpperCase(str) {
     return str === str.toUpperCase();
@@ -838,7 +853,9 @@ const Board = ({ addMove, fen, userColor }) => {
                 onDragOver={handleDragOver}
                 draggable={piece !== ""}
               >
-                {getPieceIcon(piece)}
+                <span className={`chess-piece ${getPieceColorClass(piece)}`}>
+                  {getPieceIcon(piece)}
+                </span>
                 {validMoves.some(([r, c]) => r === rowIndex && c === colIndex) && (
                   <div className="valid-move-overlay"></div>
                 )}

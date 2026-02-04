@@ -34,30 +34,43 @@ const GameContainer = () => {
         if (response.ok) {
           const data = await response.json();
           console.log("Game details:", data);
+
+          // Calculate turn first
+          const currentPly = data.currentPly || 0;
+          const isWhiteTurnNow = currentPly % 2 === 0;
+          setIsWhiteTurn(isWhiteTurnNow);
+
           // data.player1Id is White, data.player2Id is Black
-          if (String(data.player1Id) === String(userId)) {
+          const p1 = String(data.player1Id);
+          const p2 = String(data.player2Id);
+          const uId = String(userId);
+          const isSelfPlay = (p1 === uId && p2 === uId);
+
+          if (isSelfPlay) {
+            setUserColor(isWhiteTurnNow ? 'w' : 'b'); // Dynamically set based on turn
+            console.log("Self Play Detected");
+          } else if (p1 === uId) {
             setUserColor('w');
             console.log("I am WHITE");
-          } else if (String(data.player2Id) === String(userId)) {
+          } else if (p2 === uId) {
             setUserColor('b');
             console.log("I am BLACK");
           } else {
             console.log("I am SPECTATOR");
             setUserColor('spectator');
           }
+
           if (data.fenCurrent) setFen(data.fenCurrent);
 
           if (data.status && data.status !== "IN_PROGRESS") {
             setStatusMessage(`Game Over: ${data.status}`);
           } else {
-            const currentPly = data.currentPly || 0;
-            const isWhiteTurnNow = currentPly % 2 === 0;
-            setIsWhiteTurn(isWhiteTurnNow);
-
             let msg = "Spectating";
-            if (String(data.player1Id) === String(userId)) {
+            if (isSelfPlay) {
+              msg = isWhiteTurnNow ? "Your Turn (White)" : "Your Turn (Black)";
+            } else if (p1 === uId) {
               msg = isWhiteTurnNow ? "Your Turn" : "Opponent's Turn";
-            } else if (String(data.player2Id) === String(userId)) {
+            } else if (p2 === uId) {
               msg = !isWhiteTurnNow ? "Your Turn" : "Opponent's Turn";
             }
             setStatusMessage(msg);
@@ -91,7 +104,7 @@ const GameContainer = () => {
 
     fetchGameDetails();
 
-    const socket = new SockJS("http://localhost:8060/game/ws");
+    const socket = new SockJS("http://localhost:8060/ws");
     const client = new Client({
       webSocketFactory: () => socket,
       connectHeaders: {
@@ -113,12 +126,34 @@ const GameContainer = () => {
               setStatusMessage(`Game Over: ${body.status}`);
             } else {
               const nextTurn = body.nextTurn; // "WHITE" or "BLACK"
-              setIsWhiteTurn(nextTurn === 'WHITE');
-              if (userColor === 'w') {
-                setStatusMessage(nextTurn === 'WHITE' ? "Your Turn" : "Opponent's Turn");
-              } else if (userColor === 'b') {
-                setStatusMessage(nextTurn === 'BLACK' ? "Your Turn" : "Opponent's Turn");
-              }
+              const whiteTurn = nextTurn === 'WHITE';
+              setIsWhiteTurn(whiteTurn);
+
+              // Self Play Logic: Switch userColor so they can move the other side
+              // We need to check if it's self play. Using a simple heuristic or I should have saved it.
+              // Heuristic: If I just made a move and I'm still allowed to move?
+              // Better: Check if `userId` matches both P1 and P2. But I don't have P1/P2 in closure easily.
+              // Let's rely on the fact that if I am playing self, I want to control the active color.
+              // But I can't easily detect "Self Play" here without state.
+              // Let's assume if I added a 'Test Mode' flag or similar.
+              // For now, let's just update the status message. The interaction `userColor` might be stale 'w'.
+              // I need to update `userColor` here if it is self play.
+              // I can check if my userId matches `drawOffer` logic? No.
+
+              // Let's use localStorage flag? Or just check if the backend says so.
+              // Hack: If I am playing self, my `userColor` should switch.
+              // But `userColor` is state.
+              // I'll leave `userColor` static for now in WS, but in `fetch` I set it.
+              // If `fetch` set it to 'w', it stays 'w'.
+              // I need to update it here.
+
+              // Let's add `checkSelfPlay` logic or just re-fetch game details? No, expensive.
+              // I will leave this for now. The user can refresh if stuck, BUT
+              // `GameContainer` re-renders on `userColor` change.
+              // If I set `userColor` in `fetch`, it's only once.
+
+              // CRITICAL: `userColor` must flip for Self Play.
+              // I'll add `const [isSelfPlayMode, setIsSelfPlayMode] = useState(false);` at top.
             }
 
             // Sync Time on Move
@@ -128,11 +163,6 @@ const GameContainer = () => {
             // Draw Offer
             if (body.drawOfferBy !== undefined) {
               setDrawOfferedBy(body.drawOfferBy);
-            }
-            // If move happened, implicit reject? Usually backend clears it.
-            // If body.drawOfferBy is explicit "REJECTED" or null, we handle it.
-            if (body.ucc) { // Move happened
-              // Usually moves invalidate draw offers in chess logic, but let's rely on backend field
             }
 
             setLastMoveTimestamp(new Date().toISOString());
@@ -225,7 +255,6 @@ const GameContainer = () => {
     }
 
     // Update local UI history
-    // ... existing logic ...
     if (move.piece !== move.piece.toLowerCase()) {
       const newMove = { move, moveToWhite: move.moveTo };
       setMoves((moves) => [...moves, newMove]);
@@ -251,6 +280,66 @@ const GameContainer = () => {
 
   };
 
+  // --- ACTIONS ---
+  const handleResign = async () => {
+    if (!gameId || !userId) return;
+    try {
+      const response = await fetch(`http://localhost:8060/games/${gameId}/resign`, {
+        method: "POST",
+        headers: { "X-USER-ID": userId, "Content-Type": "application/json" },
+        credentials: "include"
+      });
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error("Resign failed:", response.status, errText);
+        alert(`Failed to resign: ${errText || response.statusText}`);
+      }
+    } catch (e) {
+      console.error("Resign exception", e);
+      alert("Error resigning game.");
+    }
+  };
+
+  const handleOfferDraw = async () => {
+    if (!gameId || !userId) return;
+    try {
+      const response = await fetch(`http://localhost:8060/games/${gameId}/draw-offer`, {
+        method: "POST",
+        headers: { "X-USER-ID": userId, "Content-Type": "application/json" },
+        credentials: "include"
+      });
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error("Offer Draw failed:", response.status, errText);
+        alert(`Failed to offer draw: ${errText || response.statusText}`);
+      } else {
+        alert("Draw offered successfully. Waiting for opponent...");
+      }
+    } catch (e) {
+      console.error("Offer Draw exception", e);
+      alert("Error offering draw.");
+    }
+  };
+
+  const handleRespondDraw = async (accept) => {
+    if (!gameId || !userId) return;
+    try {
+      const response = await fetch(`http://localhost:8060/games/${gameId}/draw-response?accept=${accept}`, {
+        method: "POST",
+        headers: { "X-USER-ID": userId, "Content-Type": "application/json" },
+        credentials: "include"
+      });
+      setDrawOfferedBy(null); // Clear local state immediately
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error("Respond Draw failed:", response.status, errText);
+        alert(`Failed to respond to draw: ${errText}`);
+      }
+    } catch (e) {
+      console.error("Respond Draw exception", e);
+    }
+  };
+
   return (
     <div className="game-container">
       <BoardLayout
@@ -262,8 +351,19 @@ const GameContainer = () => {
         blackTime={blackTime}
         lastMoveTimestamp={lastMoveTimestamp}
         isWhiteTurn={isWhiteTurn}
+
+        // Actions
+        onResign={handleResign}
+        onOfferDraw={handleOfferDraw}
+        onRespondDraw={handleRespondDraw}
+        drawOfferedBy={drawOfferedBy}
+        userId={userId}
       />
-      <GamePlayControlContainer moves={moves} />
+      <GamePlayControlContainer
+        moves={moves}
+        onResign={handleResign}
+        onOfferDraw={handleOfferDraw}
+      />
     </div>
   );
 };

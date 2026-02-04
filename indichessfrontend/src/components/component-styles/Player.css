@@ -2,12 +2,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 15px;
-  background-color: #3b2f2f;  /* Dark background color */
+  padding: 5px;
+  /* Removed card styles */
   color: white;
-  border-radius: 10px;
-  margin-bottom: 10px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  margin-bottom: 5px;
 }
 
 .player-info {
@@ -17,10 +15,15 @@
 }
 
 .player-name {
-  font-size: 16px;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
+  font-size: 0.95rem;
+  /* Smaller font */
+  font-weight: 600;
+  color: #fff;
+}
+
+.player-rating {
+  font-size: 0.85rem;
+  color: #888;
 }
 
 .piece-icon {
@@ -38,7 +41,8 @@
 .player-timer {
   font-size: 16px;
   font-weight: bold;
-  background-color: #4CAF50;  /* Timer background color */
+  background-color: #4CAF50;
+  /* Timer background color */
   padding: 5px 10px;
   border-radius: 5px;
 }

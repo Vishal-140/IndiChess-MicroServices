@@ -1,79 +1,123 @@
 .side-nav {
+  width: var(--sidebar-width);
   height: 100vh;
-  width: 200px;
-  background-color: #3b2f2f;  /* Dark wood-like background */
-  color: white;
+  box-sizing: border-box;
+  /* Fix height overflow */
+  background-color: var(--bg-card);
+  border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 20px;
-  padding-bottom: 30px;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
-}
-
-.side-nav.light-mode {
-  background-color: #f3f4f6;  /* Light background for Light UI mode */
-  color: black;
+  padding: 20px 0 40px 0;
+  /* Extra bottom padding for logout button */
+  transition: width 0.3s ease;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 100;
 }
 
 .logo {
-  text-align: center;
-  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px;
+  margin-bottom: 40px;
+  color: #ffffff;
+  /* Force white for contrast */
 }
 
 .logo h2 {
-  font-family: 'Arial', sans-serif;
-  font-size: 24px;
-  margin-bottom: 10px;
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
 }
 
-.menu {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-.menu-item {
-  background-color: transparent;
-  color: white;
-  border: none;
-  font-size: 18px;
-  margin: 15px 0;
-  padding: 10px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  transition: background-color 0.3s;
-}
-
-.menu-item:hover {
-  background-color: #563636;
-}
-
+.menu,
 .settings {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  gap: 5px;
+  width: 100%;
 }
 
+.settings {
+  margin-top: auto;
+  /* Push to bottom */
+  border-top: 1px solid var(--border-color);
+  padding-top: 10px;
+}
+
+.menu-item,
 .settings-item {
-  background-color: transparent;
-  color: white;
-  border: none;
-  font-size: 18px;
-  margin: 10px 0;
-  padding: 10px;
-  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 10px;
-  transition: background-color 0.3s;
+  gap: 15px;
+  padding: 12px 20px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+  width: 100%;
 }
 
+.menu-item:hover,
 .settings-item:hover {
-  background-color: #563636;
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.menu-item.active {
+  background-color: rgba(76, 175, 80, 0.1);
+  color: var(--accent-green);
+  border-right: 3px solid var(--accent-green);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .side-nav {
+    width: 100%;
+    height: 60px;
+    bottom: 0;
+    top: auto;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 0;
+    border-right: none;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .logo {
+    display: none;
+  }
+
+  .settings {
+    margin-top: 0;
+    border-top: none;
+    padding-top: 0;
+    flex-direction: row;
+    width: auto;
+  }
+
+  .menu {
+    flex-direction: row;
+    width: auto;
+  }
+
+  .menu-item,
+  .settings-item {
+    flex-direction: column;
+    gap: 5px;
+    font-size: 0.7rem;
+    padding: 8px;
+    justify-content: center;
+  }
+
+  /* Hide less important items on mobile to save space if needed */
+  .mobile-hide {
+    display: none;
+  }
 }

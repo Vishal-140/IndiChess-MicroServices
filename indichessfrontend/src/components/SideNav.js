@@ -1,44 +1,50 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import "./component-styles/SideNav.css";
-import { FaChessPawn, FaSun, FaCog, FaBars } from 'react-icons/fa';  // Icons for the menu items
+import { FaChessPawn, FaCog, FaLifeRing, FaSignOutAlt } from 'react-icons/fa';
 
 const SideNav = () => {
-  const [lightMode, setLightMode] = useState(false);  // To toggle between light and dark UI
+  const navigate = useNavigate();
 
-  const handleToggleLightMode = () => {
-    setLightMode(!lightMode);
+  const handleLogout = async () => {
+    try {
+      await fetch("http://localhost:8060/logout", {
+        method: "POST",
+        credentials: "include"
+      });
+    } catch (e) {
+      console.error("Logout failed at backend", e);
+    }
+    localStorage.clear();
+    navigate("/");
   };
 
   return (
-    <div className={`side-nav ${lightMode ? 'light-mode' : ''}`}>
+    <div className="side-nav">
       <div className="logo">
-        <h2>Chess.com</h2>
-        <FaChessPawn size={40} />
+        <FaChessPawn size={28} />
+        <h2>IndiChess</h2>
       </div>
 
       <div className="menu">
-        <button className="menu-item">
+        <button className="menu-item active">
           <FaChessPawn size={20} />
-          Play
+          <span>Play</span>
         </button>
       </div>
 
       <div className="settings">
-        <button className="settings-item" onClick={handleToggleLightMode}>
-          <FaSun size={20} />
-          Light UI
-        </button>
-        <button className="settings-item">
-          <FaBars size={20} />
-          Collapse
-        </button>
         <button className="settings-item">
           <FaCog size={20} />
-          Settings
+          <span>Settings</span>
         </button>
         <button className="settings-item">
-          <FaBars size={20} />
-          Support
+          <FaLifeRing size={20} />
+          <span>Support</span>
+        </button>
+        <button className="settings-item" onClick={handleLogout} style={{ color: 'var(--accent-red)' }}>
+          <FaSignOutAlt size={20} />
+          <span>Logout</span>
         </button>
       </div>
     </div>

@@ -21,11 +21,13 @@ function SignupCard({ handleToggleSignup }) {
         country,
       });
 
-      console.log(response);
-      // If signup is successful, redirect to login or home
-      if (response.status === 200) {
-        // console.log("Show login");
+      console.log("Signup response:", response);
+      // If signup is successful (2xx), redirect to login
+      if (response.status >= 200 && response.status < 300) {
+        console.log("Signup successful, toggling to login...");
         handleToggleSignup();
+      } else {
+        console.warn("Unexpected status code:", response.status);
       }
     } catch (err) {
       setError("Error in signup. Please try again.");

@@ -44,6 +44,8 @@ const Board = ({ addMove, fen, userColor }) => {
   // rooksMoved[3] --> signifies black's queen side rook's movement
   const [rooksMoved, setRooksMoved] = useState([false, false, false, false]);
 
+  const [pendingMove, setPendingMove] = useState(null);
+
   // Handle window resize
   const updateBoardSize = () => {
     const size = Math.min(window.innerWidth, window.innerHeight) * 0.6;  // 60% of the viewport size
@@ -619,7 +621,7 @@ const Board = ({ addMove, fen, userColor }) => {
   // piece(non-pawn) + capture(x) + squareTo + check(+)/checkmate(#)
   // for castling --> O-O, O-O-O
   // for checkmate --> qg7#
-  const updatePrevMove = (fr, fc, tr, tc, piece, capturedPiece, castled, fenBefore) => {
+  const updatePrevMove = (fr, fc, tr, tc, piece, capturedPiece, castled, fenBefore, promotion = null) => {
     const sqnumfrom = 8 - fr;
     const sqnumto = 8 - tr;
     let moveFrom = String.fromCharCode('a'.charCodeAt(0) + fc);
@@ -672,7 +674,7 @@ const Board = ({ addMove, fen, userColor }) => {
     const fenAfter = convertBoardToFEN(board);
     const createdAt = new Date().toISOString();
     setPrevMove({ piece, moveFrom, moveTo, sqnumfrom, sqnumto, tc, tr });
-    addMove({ piece, moveFrom, moveTo, sqnumfrom, sqnumto, tc, tr, fenBefore, fenAfter, createdAt });
+    addMove({ piece, moveFrom, moveTo, sqnumfrom, sqnumto, tc, tr, fenBefore, fenAfter, createdAt, promotion });
 
     // after effects
     if (piece === "R" && fc === 0) {
@@ -704,15 +706,23 @@ const Board = ({ addMove, fen, userColor }) => {
 
 
   const handlePromotion = (promotionPiece) => {
-    const [row, col, piece] = promotingPawn;
+    // Resume pending move
+    const { fromRow, fromCol, row, col, piece, capturedPiece, fenBefore, castled } = pendingMove;
 
     if (row === 7) promotionPiece = promotionPiece.toLowerCase();
 
     const newBoard = [...board];
     newBoard[row][col] = promotionPiece;  // Promote the pawn to the selected piece
+    newBoard[fromRow][fromCol] = ""; // Ensure old square is cleared (was handled in handleDrop, but we deferred)
 
     setBoard(newBoard);
+
+    // Finalize move
+    updatePrevMove(fromRow, fromCol, row, col, piece, capturedPiece, castled, fenBefore, promotionPiece);
+    setIsWhiteTurn(!isWhiteTurn);
+
     setShowModal(false);  // Close the promotion modal
+    setPendingMove(null);
   };
 
   const getMovesOfPlayer = () => {
@@ -752,12 +762,12 @@ const Board = ({ addMove, fen, userColor }) => {
 
       // promotion
       // promotion logic
-      if (piece === "p" && row === 7) {
+      // promotion logic
+      if ((piece === "p" && row === 7) || (piece === "P" && row === 0)) {
         setPromotingPawn([row, col, piece]);  // Save the pawn's position and type
+        setPendingMove({ fromRow, fromCol, row, col, piece, capturedPiece, fenBefore, castled: false });
         setShowModal(true);  // Show the modal for promotion
-      } else if (piece === "P" && row === 0) {
-        setPromotingPawn([row, col, piece]);  // Save the pawn's position and type
-        setShowModal(true);  // Show the modal for promotion
+        return; // Pause execution
       }
 
       // castling logic

@@ -175,6 +175,11 @@ const GameContainer = () => {
       // But `addMove` payload doesn't seem to explicitly have promotion char.
       // We might need to assume 'q' or add it to Board.js.
 
+      if (move.promotion) {
+        // e.g. "q", "n" (lowercase expected by backend usually, logic said Character.toLowerCase)
+        uci += move.promotion.toLowerCase();
+      }
+
       console.log("Sending UCI:", uci);
 
       const moveRequest = {

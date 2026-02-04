@@ -54,6 +54,58 @@ public class ChessBoard {
         return fullMoveNumber;
     }
 
+    // --- STATE MUTATION METHODS ---
+
+    public void incrementHalfMoveClock() {
+        this.halfMoveClock++;
+    }
+
+    public void resetHalfMoveClock() {
+        this.halfMoveClock = 0;
+    }
+
+    public void incrementFullMoveNumber() {
+        this.fullMoveNumber++;
+    }
+
+    public void switchActiveColor() {
+        this.activeColor = (this.activeColor == PieceColor.WHITE) ? PieceColor.BLACK : PieceColor.WHITE;
+    }
+
+    /**
+     * Revoke castling rights for a specific side/color.
+     * @param white true for White, false for Black
+     * @param kingSide true to revoke Kingside (K/k)
+     * @param queenSide true to revoke Queenside (Q/q)
+     */
+    public void revokeCastlingRights(boolean white, boolean kingSide, boolean queenSide) {
+        if (this.castleRights.equals("-")) return;
+
+        StringBuilder sb = new StringBuilder();
+        // We rebuild the string excluding what we want to remove
+        for (char c : this.castleRights.toCharArray()) {
+            boolean keep = true;
+            if (white) {
+                if (kingSide && c == 'K') keep = false;
+                if (queenSide && c == 'Q') keep = false;
+            } else {
+                if (kingSide && c == 'k') keep = false;
+                if (queenSide && c == 'q') keep = false;
+            }
+            if (keep) sb.append(c);
+        }
+
+        String newRights = sb.toString();
+        this.castleRights = newRights.isEmpty() ? "-" : newRights;
+    }
+
+    /**
+     * Revoke ALL castling rights for a color (e.g., King moved).
+     */
+    public void revokeAllCastlingRights(boolean white) {
+        revokeCastlingRights(white, true, true);
+    }
+    
     // --- FEN PARSING ---
 
     private void loadFen(String fen) {
@@ -98,9 +150,9 @@ public class ChessBoard {
     // --- HELPER to Switch Turn ---
     
     public String toFenWithNextTurn() {
-        this.activeColor = (this.activeColor == PieceColor.WHITE) ? PieceColor.BLACK : PieceColor.WHITE;
+        switchActiveColor();
         if (this.activeColor == PieceColor.WHITE) {
-            this.fullMoveNumber++;
+            incrementFullMoveNumber();
         }
         return toFen();
     }

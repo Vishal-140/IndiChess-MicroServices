@@ -19,14 +19,47 @@ public class GameEngine {
         int toFile = uciMove.charAt(2) - 'a';
         int toRank = uciMove.charAt(3) - '1';
 
+        // Detect Capture (before moving)
+        boolean isCapture = board.getPiece(toRank, toFile) != null;
+        
+        // Handle Castling Rights (Rook Capture)
+        if (isCapture) {
+            ChessPiece captured = board.getPiece(toRank, toFile);
+            if (captured.getType() == ChessPiece.Type.ROOK) {
+                if (toRank == 0 && toFile == 0) board.revokeCastlingRights(true, false, true); // White Queenside
+                if (toRank == 0 && toFile == 7) board.revokeCastlingRights(true, true, false); // White Kingside
+                if (toRank == 7 && toFile == 0) board.revokeCastlingRights(false, false, true); // Black Queenside
+                if (toRank == 7 && toFile == 7) board.revokeCastlingRights(false, true, false); // Black Kingside
+            }
+        }
+
         ChessPiece piece = board.getPiece(fromRank, fromFile);
+        
+        // Handle Castling Rights (Moving King or Rook)
+        if (piece.getType() == ChessPiece.Type.KING) {
+            board.revokeAllCastlingRights(piece.getColor() == PieceColor.WHITE);
+        } else if (piece.getType() == ChessPiece.Type.ROOK) {
+             if (fromRank == 0 && fromFile == 0) board.revokeCastlingRights(true, false, true);
+             if (fromRank == 0 && fromFile == 7) board.revokeCastlingRights(true, true, false);
+             if (fromRank == 7 && fromFile == 0) board.revokeCastlingRights(false, false, true);
+             if (fromRank == 7 && fromFile == 7) board.revokeCastlingRights(false, true, false);
+        }
+
+        // Apply Move to Board
         board.setPiece(toRank, toFile, piece);
         board.setPiece(fromRank, fromFile, null);
         
+        // Update HalfMove Clock
+        if (piece.getType() == ChessPiece.Type.PAWN || isCapture) {
+            board.resetHalfMoveClock();
+        } else {
+            board.incrementHalfMoveClock();
+        }
+
         // Reset En Passant Target by default
         board.setEnPassantTarget("-");
 
-        // TODO: Handle Pawn Promotion (e.g. "e7e8q")
+        // Handle Pawn Promotion and Special Moves
         if (piece.getType() == ChessPiece.Type.PAWN) {
              int dr = toRank - fromRank;
 
@@ -38,20 +71,33 @@ public class GameEngine {
              }
 
              // 2. En Passant Capture Execution
-             // If pawn moved diagonally to an empty square, it's En Passant
-             if (Math.abs(toFile - fromFile) == 1 && board.getPiece(toRank, toFile) == null) {
-                 // The captured pawn is "behind" the target square
-                 // If WHITE moved up (rank +1), captured pawn is at toRank - 1
-                 // If BLACK moved down (rank -1), captured pawn is at toRank + 1
+             if (Math.abs(toFile - fromFile) == 1 && !isCapture) {
+                 // It was an en passant capture (diagonal move to empty square)
+                 isCapture = true; // Update flag
                  int capturedRank = (piece.getColor() == PieceColor.WHITE) ? toRank - 1 : toRank + 1;
                  board.setPiece(capturedRank, toFile, null);
+                 board.resetHalfMoveClock(); // Ensure reset
              }
 
              // 3. Promotion
              if ((piece.getColor() == PieceColor.WHITE && toRank == 7) ||
                  (piece.getColor() == PieceColor.BLACK && toRank == 0)) {
-                 board.setPiece(toRank, toFile, 
-                     piece.getColor() == PieceColor.WHITE ? ChessPiece.WHITE_QUEEN : ChessPiece.BLACK_QUEEN);
+                 
+                 ChessPiece promotedPiece;
+                 // Parse promotion char from UCI (e.g., e7e8q)
+                 if (uciMove.length() == 5) {
+                     char promoChar = uciMove.charAt(4);
+                     promotedPiece = switch (Character.toLowerCase(promoChar)) {
+                         case 'r' -> (piece.getColor() == PieceColor.WHITE) ? ChessPiece.WHITE_ROOK : ChessPiece.BLACK_ROOK;
+                         case 'b' -> (piece.getColor() == PieceColor.WHITE) ? ChessPiece.WHITE_BISHOP : ChessPiece.BLACK_BISHOP;
+                         case 'n' -> (piece.getColor() == PieceColor.WHITE) ? ChessPiece.WHITE_KNIGHT : ChessPiece.BLACK_KNIGHT;
+                         default -> (piece.getColor() == PieceColor.WHITE) ? ChessPiece.WHITE_QUEEN : ChessPiece.BLACK_QUEEN; 
+                     };
+                 } else {
+                     // Default to Queen
+                     promotedPiece = (piece.getColor() == PieceColor.WHITE) ? ChessPiece.WHITE_QUEEN : ChessPiece.BLACK_QUEEN;
+                 }
+                 board.setPiece(toRank, toFile, promotedPiece);
              }
         }
         
@@ -66,18 +112,7 @@ public class GameEngine {
             board.setPiece(toRank, rookTx, null);
         }
 
-        // 3. Update State (Turn, Castling Rights, etc.)
-        // This is a simplified update. A real engine needs detailed state tracking.
-        // For now, we manually reconstruct the FEN by flipping the active color.
-        
-        // Toggle turn
-        // Note: ChessBoard.toFen() uses internal activeColor field. 
-        // We need a method to switch turn in ChessBoard or manually manipulate it.
-        // For now, let's just use a string manipulation or add a method to ChessBoard.
-        
-        // Let's rely on constructing a NEW FEN or modifying the board state deeply.
-        // Since ChessBoard is our state holder, we should add a `switchTurn()` method.
-        
+        // 3. Update State (Turn)
         return board.toFenWithNextTurn(); 
     }
     

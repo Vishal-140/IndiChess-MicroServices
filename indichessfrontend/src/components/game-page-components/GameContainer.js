@@ -21,89 +21,92 @@ const GameContainer = () => {
 
   const [userColor, setUserColor] = useState(null); // 'w' or 'b'
 
-  useEffect(() => {
+  // Define fetchGameDetails at component level so it can be reused
+  const fetchGameDetails = async () => {
     if (!gameId) return;
+    try {
+      const response = await fetch(`http://localhost:8060/games/${gameId}`, {
+        headers: { "X-USER-ID": userId },
+        credentials: "include"
+      });
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Game details fetched:", data);
 
-    // Fetch Game Details to determine color
-    const fetchGameDetails = async () => {
-      try {
-        const response = await fetch(`http://localhost:8060/games/${gameId}`, {
-          headers: { "X-USER-ID": userId },
-          credentials: "include"
-        });
-        if (response.ok) {
-          const data = await response.json();
-          console.log("Game details:", data);
+        // Calculate turn first
+        const currentPly = data.currentPly || 0;
+        const isWhiteTurnNow = currentPly % 2 === 0;
+        setIsWhiteTurn(isWhiteTurnNow);
 
-          // Calculate turn first
-          const currentPly = data.currentPly || 0;
-          const isWhiteTurnNow = currentPly % 2 === 0;
-          setIsWhiteTurn(isWhiteTurnNow);
+        // data.player1Id is White, data.player2Id is Black
+        const p1 = String(data.player1Id);
+        const p2 = String(data.player2Id);
+        const uId = String(userId);
+        const isSelfPlay = (p1 === uId && p2 === uId);
 
-          // data.player1Id is White, data.player2Id is Black
-          const p1 = String(data.player1Id);
-          const p2 = String(data.player2Id);
-          const uId = String(userId);
-          const isSelfPlay = (p1 === uId && p2 === uId);
-
-          if (isSelfPlay) {
-            setUserColor(isWhiteTurnNow ? 'w' : 'b'); // Dynamically set based on turn
-            console.log("Self Play Detected");
-          } else if (p1 === uId) {
-            setUserColor('w');
-            console.log("I am WHITE");
-          } else if (p2 === uId) {
-            setUserColor('b');
-            console.log("I am BLACK");
-          } else {
-            console.log("I am SPECTATOR");
-            setUserColor('spectator');
-          }
-
-          if (data.fenCurrent) setFen(data.fenCurrent);
-
-          if (data.status && data.status !== "IN_PROGRESS") {
-            setStatusMessage(`Game Over: ${data.status}`);
-          } else {
-            let msg = "Spectating";
-            if (isSelfPlay) {
-              msg = isWhiteTurnNow ? "Your Turn (White)" : "Your Turn (Black)";
-            } else if (p1 === uId) {
-              msg = isWhiteTurnNow ? "Your Turn" : "Opponent's Turn";
-            } else if (p2 === uId) {
-              msg = !isWhiteTurnNow ? "Your Turn" : "Opponent's Turn";
-            }
-            setStatusMessage(msg);
-          }
-
-          // Sync Timers
-          if (data.whiteTime !== undefined) setWhiteTime(data.whiteTime);
-          if (data.blackTime !== undefined) setBlackTime(data.blackTime);
-          if (data.lastMoveTimestamp) setLastMoveTimestamp(data.lastMoveTimestamp);
-
-          // Restore Moves
-          if (data.moves && Array.isArray(data.moves)) {
-            const restoredMoves = [];
-            for (let i = 0; i < data.moves.length; i += 2) {
-              const whiteMove = data.moves[i];
-              const blackMove = data.moves[i + 1];
-
-              const moveObj = {
-                moveToWhite: whiteMove.san || whiteMove.uci,
-                moveToBlack: blackMove ? (blackMove.san || blackMove.uci) : null,
-              };
-              restoredMoves.push(moveObj);
-            }
-            setMoves(restoredMoves);
-          }
+        if (isSelfPlay) {
+          setUserColor(isWhiteTurnNow ? 'w' : 'b');
+        } else if (p1 === uId) {
+          setUserColor('w');
+        } else if (p2 === uId) {
+          setUserColor('b');
+        } else {
+          setUserColor('spectator');
         }
-      } catch (e) {
-        console.error("Failed to fetch game details", e);
-      }
-    };
 
+        if (data.fenCurrent) setFen(data.fenCurrent);
+
+        if (data.status && data.status !== "IN_PROGRESS") {
+          setStatusMessage(`Game Over: ${data.status}`);
+        } else {
+          let msg = "Spectating";
+          if (isSelfPlay) {
+            msg = isWhiteTurnNow ? "Your Turn (White)" : "Your Turn (Black)";
+          } else if (p1 === uId) {
+            msg = isWhiteTurnNow ? "Your Turn" : "Opponent's Turn";
+          } else if (p2 === uId) {
+            msg = !isWhiteTurnNow ? "Your Turn" : "Opponent's Turn";
+          }
+          setStatusMessage(msg);
+        }
+
+        // Sync Timers
+        if (data.whiteTime !== undefined) setWhiteTime(data.whiteTime);
+        if (data.blackTime !== undefined) setBlackTime(data.blackTime);
+        if (data.lastMoveTimestamp) setLastMoveTimestamp(data.lastMoveTimestamp);
+
+        // Restore Moves
+        if (data.moves && Array.isArray(data.moves)) {
+          const restoredMoves = [];
+          for (let i = 0; i < data.moves.length; i += 2) {
+            const whiteMove = data.moves[i];
+            const blackMove = data.moves[i + 1];
+
+            const moveObj = {
+              moveToWhite: whiteMove.san || whiteMove.uci,
+              moveToBlack: blackMove ? (blackMove.san || blackMove.uci) : null,
+            };
+            restoredMoves.push(moveObj);
+          }
+          setMoves(restoredMoves);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to fetch game details", e);
+    }
+  };
+
+  useEffect(() => {
+    // 1. Initial Fetch
     fetchGameDetails();
 
+    // 2. Polling Fallback (Every 2 seconds)
+    // This guarantees sync even if WebSocket connection fails or Gateway drops messages
+    const intervalId = setInterval(() => {
+      fetchGameDetails();
+    }, 2000);
+
+    // 3. WebSocket Setup (Real-time updates)
     const socket = new SockJS("http://localhost:8060/ws");
     const client = new Client({
       webSocketFactory: () => socket,
@@ -129,31 +132,7 @@ const GameContainer = () => {
               const whiteTurn = nextTurn === 'WHITE';
               setIsWhiteTurn(whiteTurn);
 
-              // Self Play Logic: Switch userColor so they can move the other side
-              // We need to check if it's self play. Using a simple heuristic or I should have saved it.
-              // Heuristic: If I just made a move and I'm still allowed to move?
-              // Better: Check if `userId` matches both P1 and P2. But I don't have P1/P2 in closure easily.
-              // Let's rely on the fact that if I am playing self, I want to control the active color.
-              // But I can't easily detect "Self Play" here without state.
-              // Let's assume if I added a 'Test Mode' flag or similar.
-              // For now, let's just update the status message. The interaction `userColor` might be stale 'w'.
-              // I need to update `userColor` here if it is self play.
-              // I can check if my userId matches `drawOffer` logic? No.
-
-              // Let's use localStorage flag? Or just check if the backend says so.
-              // Hack: If I am playing self, my `userColor` should switch.
-              // But `userColor` is state.
-              // I'll leave `userColor` static for now in WS, but in `fetch` I set it.
-              // If `fetch` set it to 'w', it stays 'w'.
-              // I need to update it here.
-
-              // Let's add `checkSelfPlay` logic or just re-fetch game details? No, expensive.
-              // I will leave this for now. The user can refresh if stuck, BUT
-              // `GameContainer` re-renders on `userColor` change.
-              // If I set `userColor` in `fetch`, it's only once.
-
-              // CRITICAL: `userColor` must flip for Self Play.
-              // I'll add `const [isSelfPlayMode, setIsSelfPlayMode] = useState(false);` at top.
+              // Self-play heuristic sync handled by re-render
             }
 
             // Sync Time on Move
@@ -175,86 +154,69 @@ const GameContainer = () => {
       },
     });
 
-    client.activate();
+    try {
+      client.activate();
+    } catch (e) {
+      console.error("WS Activation failed", e);
+    }
     stompClientRef.current = client;
 
     return () => {
-      client.deactivate();
+      clearInterval(intervalId); // Stop polling on unmount
+      if (client.connected) {
+        client.deactivate();
+      }
     };
   }, [gameId, userId]);
 
   // Function to add a move (Triggered by Board.js drop)
-  const addMove = (move) => {
-    // Send move to backend
-    if (stompClientRef.current && stompClientRef.current.connected) {
-      // Construct UCI (e.g. from "e2" to "e4" -> "e2e4")
-      // move object has sqnumfrom, sqnumto... 
-      // Wait, moveFrom is "e2", moveTo is "e4" (sometimes with piece like Ne4)
-      // We need raw coordinates or raw string. 
-      // Let's inspect Board.js output in addMove.
-      // It provides: {piece, moveFrom, moveTo, sqnumfrom, sqnumto, tc , tr, fenBefore, fenAfter, createdAt}
+  const addMove = async (move) => {
+    // 1. Construct UCI
+    let uci = move.moveFrom; // e.g. "e2"
+    const destRank = 8 - move.tr;
+    const destFile = String.fromCharCode('a'.charCodeAt(0) + move.tc);
+    uci += destFile + destRank; // "e2e4"
 
-      // We need to construct UCI. 
-      // Board.js `moveFrom` logic matches standard notation? 
-      // Actually `updatePrevMove` in Board.js does:
-      // moveFrom = columnChar + rowNum
-      // moveTo = ...complex...
-
-      // Let's re-calculate simple UCI from keys:
-      // We need `from` and `to`. 
-      // Board.js passes `sqnumfrom`, `sqnumto`? No.
-      // It passes `moveFrom` which is e.g. "e2".
-      // It passes `moveTo` which is e.g. "Net4" (Knight x e4).
-
-      // Backend expects simple UCI "e2e4".
-      // We might need to extract it.
-      // Or simpler: We know user just dragged from (r1,c1) to (r2,c2).
-      // Board.js has this info. `updatePrevMove` has `fr, fc, tr, tc`. 
-      // But `addMove` receives an object. 
-      // `updatePrevMove` calls `addMove` with `{piece, moveFrom, moveTo, sqnumfrom, sqnumto, tc , tr...}`
-      // `sqnumfrom` is 8-fr? Board.js: `sqnumfrom = 8-fr`.
-      // `moveFrom` is `char + sqnumfrom`. e.g. "e2". Correct.
-
-      // But `moveTo` in the object is the SAN (Standard Algebraic Notation) like "Nxe4".
-      // We need the destination square.
-      // The object has `tc` and `tr`. `tr` is row index (0-7), `tc` is col index (0-7).
-      // Destination square = (char)('a' + tc) + (8-tr).
-
-      let uci = move.moveFrom; // e.g. "e2"
-
-      // Calculate dest from tc/tr
-      const destRank = 8 - move.tr;
-      const destFile = String.fromCharCode('a'.charCodeAt(0) + move.tc);
-      uci += destFile + destRank; // "e2e4"
-
-      // Promotion? 
-      // If pawn reached last rank, we need to know promotion piece.
-      // Board logic handles promotion modal and then calls `updatePrevMove`.
-      // But `addMove` payload doesn't seem to explicitly have promotion char.
-      // We might need to assume 'q' or add it to Board.js.
-
-      if (move.promotion) {
-        // e.g. "q", "n" (lowercase expected by backend usually, logic said Character.toLowerCase)
-        uci += move.promotion.toLowerCase();
-      }
-
-      console.log("Sending UCI:", uci);
-
-      const moveRequest = {
-        gameId: gameId,
-        playerId: userId,
-        uci: uci,
-        fen: move.fenAfter
-      };
-
-      stompClientRef.current.publish({
-        destination: `/app/game/${gameId}/move`,
-        headers: { "X-USER-ID": userId },
-        body: JSON.stringify(moveRequest),
-      });
+    if (move.promotion) {
+      uci += move.promotion.toLowerCase();
     }
 
-    // Update local UI history
+    console.log("Sending Move (REST):", uci);
+
+    // 2. Send via REST for reliability
+    try {
+      const response = await fetch(`http://localhost:8060/games/${gameId}/move`, {
+        method: "POST",
+        headers: {
+          "X-USER-ID": userId,
+          "Content-Type": "application/json"
+        },
+        credentials: "include",
+        body: JSON.stringify({ uci: uci })
+      });
+
+      if (!response.ok) {
+        const err = await response.text();
+        console.error("Move failed:", err);
+        alert("Invalid Move: " + err);
+        // We might want to revert the board here, but Board.js state is complex.
+        // For now, refreshing or fetching details will fix it.
+        fetchGameDetails();
+        return;
+      } else {
+        // Success
+        console.log("Move sent successfully");
+        // We rely on WebSocket for the "Turn Check" update, 
+        // but we can also force fetch to be safe (fixes "Your Turn" not changing if WS lags)
+        fetchGameDetails();
+      }
+    } catch (e) {
+      console.error("Error sending move:", e);
+      alert("Network Error sending move.");
+    }
+
+    // 3. Optimistic UI Update (Local)
+    // This updates the visual board immediately for smoothness
     if (move.piece !== move.piece.toLowerCase()) {
       const newMove = { move, moveToWhite: move.moveTo };
       setMoves((moves) => [...moves, newMove]);
@@ -272,18 +234,17 @@ const GameContainer = () => {
           newMoves[newMoves.length - 1] = lastMove;
           return newMoves;
         } else {
-          // Fallback if black moves first (custom setup)
           return [...prevMoves, { flow: "weird", moveToBlack: move.moveTo }];
         }
       });
     }
-
   };
 
   // --- ACTIONS ---
   const handleResign = async () => {
     if (!gameId || !userId) return;
     try {
+      console.log("Resigning game...");
       const response = await fetch(`http://localhost:8060/games/${gameId}/resign`, {
         method: "POST",
         headers: { "X-USER-ID": userId, "Content-Type": "application/json" },
@@ -293,6 +254,8 @@ const GameContainer = () => {
         const errText = await response.text();
         console.error("Resign failed:", response.status, errText);
         alert(`Failed to resign: ${errText || response.statusText}`);
+      } else {
+        fetchGameDetails();
       }
     } catch (e) {
       console.error("Resign exception", e);
@@ -303,6 +266,7 @@ const GameContainer = () => {
   const handleOfferDraw = async () => {
     if (!gameId || !userId) return;
     try {
+      console.log("Offering draw...");
       const response = await fetch(`http://localhost:8060/games/${gameId}/draw-offer`, {
         method: "POST",
         headers: { "X-USER-ID": userId, "Content-Type": "application/json" },
@@ -324,16 +288,19 @@ const GameContainer = () => {
   const handleRespondDraw = async (accept) => {
     if (!gameId || !userId) return;
     try {
+      console.log(`Responding to draw: ${accept}`);
       const response = await fetch(`http://localhost:8060/games/${gameId}/draw-response?accept=${accept}`, {
         method: "POST",
         headers: { "X-USER-ID": userId, "Content-Type": "application/json" },
         credentials: "include"
       });
-      setDrawOfferedBy(null); // Clear local state immediately
+      setDrawOfferedBy(null);
       if (!response.ok) {
         const errText = await response.text();
         console.error("Respond Draw failed:", response.status, errText);
         alert(`Failed to respond to draw: ${errText}`);
+      } else {
+        if (accept) fetchGameDetails();
       }
     } catch (e) {
       console.error("Respond Draw exception", e);

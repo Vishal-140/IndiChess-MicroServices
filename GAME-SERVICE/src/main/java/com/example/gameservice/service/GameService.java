@@ -35,6 +35,12 @@ public class GameService {
         game.setFenCurrent(
                 "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         );
+        
+        // Initialize Timers (in seconds)
+        int initialTime = getInitialTimeInSeconds(gameType);
+        game.setWhiteTime(initialTime);
+        game.setBlackTime(initialTime);
+        game.setLastMoveTimestamp(LocalDateTime.now()); // Set start time
 
         return gameRepo.save(game);
     }
@@ -50,7 +56,24 @@ public class GameService {
         Game game = new Game(player1Id, player2Id, gameType);
         game.setStatus(GameStatus.IN_PROGRESS);
         game.setCurrentPly(0);
+        game.setMatchId(0L); // Set default matchId for manual/direct games
+        
+        // Initialize Timers
+        int initialTime = getInitialTimeInSeconds(gameType);
+        game.setWhiteTime(initialTime);
+        game.setBlackTime(initialTime);
+        game.setLastMoveTimestamp(LocalDateTime.now());
+
         return gameRepo.save(game);
+    }
+
+    private int getInitialTimeInSeconds(GameType gameType) {
+        switch (gameType) {
+            case BLITZ: return 180; // 3 mins
+            case RAPID: return 600;  // 10 mins
+            case STANDARD: return 3600; // 60 mins
+            default: return 600;
+        }
     }
 
     // =========================

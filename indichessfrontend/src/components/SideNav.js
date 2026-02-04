@@ -7,6 +7,24 @@ const SideNav = () => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
+    // Check if we are in a game and Resign first
+    const searchParams = new URLSearchParams(window.location.search);
+    const currentGameId = searchParams.get('id');
+    const userId = localStorage.getItem("userId");
+
+    if (currentGameId && userId) {
+      try {
+        console.log(`Resigning game ${currentGameId} due to logout...`);
+        await fetch(`http://localhost:8060/games/${currentGameId}/resign`, {
+          method: "POST",
+          headers: { "X-USER-ID": userId, "Content-Type": "application/json" },
+          credentials: "include"
+        });
+      } catch (e) {
+        console.error("Auto-resign failed on logout", e);
+      }
+    }
+
     try {
       await fetch("http://localhost:8060/logout", {
         method: "POST",

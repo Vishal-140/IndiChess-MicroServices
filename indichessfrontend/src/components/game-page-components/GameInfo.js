@@ -17,7 +17,7 @@ const GameInfo = ({ streak }) => {
     {
       id: "BLITZ",
       title: "Blitz",
-      time: "3 min + 2 sec",
+      time: "3 min",
       desc: "Fast paced action for quick thinkers.",
       icon: <FaBolt size={24} />
     },
@@ -123,42 +123,40 @@ const GameInfo = ({ streak }) => {
       return;
     }
 
-    // Direct Game Creation Strategy to fix "Same ID" bug and ensure fresh state
     const userId = getUserId();
-    const opponentId = Math.floor(Math.random() * 100000) + 1000; // Mock opponent for testing
+    setIsSearching(true);
 
     try {
-      setIsSearching(true);
-      // Using manual game creation endpoint
-      const response = await fetch(`http://localhost:8060/games?gameType=${gameType}`, {
+      // Join Matchmaking Queue
+      const response = await fetch(`http://localhost:8060/matchmaking/join?gameType=${gameType}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-PLAYER1-ID": userId,
-          "X-PLAYER2-ID": String(opponentId),
-          "X-USER-ID": userId // Some endpoints might check this
-        },
+        headers: { "X-USER-ID": userId },
         credentials: "include"
       });
 
       if (response.ok) {
-        const game = await response.json();
-        if (game.id) {
+        const data = await response.json();
+        // data.matchId is either the GameID (positive) or Status (-1: waiting, -2: error)
+        if (data.matchId > 0) {
+          // Instant match found
           setIsSearching(false);
-          navigate(`/game?id=${game.id}`);
+          const gameId = data.matchId;
+          navigate(`/game?id=${gameId}`);
+        } else if (data.matchId === -1) {
+          // Added to queue, start polling
+          pollForMatch();
         } else {
-          alert("Failed to create game: No ID returned");
+          alert("Could not join matchmaking queue (Err: " + data.matchId + ")");
           setIsSearching(false);
         }
       } else {
-        const err = await response.text();
-        console.error("Create Game failed:", err);
-        alert("Failed to create new game. Ensure Backend is restarted.");
+        console.error("Join Queue failed:", response.status);
+        alert("Matchmaking service unavailable.");
         setIsSearching(false);
       }
     } catch (e) {
-      console.error("Create Game exception:", e);
-      alert("Error creating game. Is the backend running?");
+      console.error("Matchmaking exception:", e);
+      alert("Error connecting to matchmaking service.");
       setIsSearching(false);
     }
   };

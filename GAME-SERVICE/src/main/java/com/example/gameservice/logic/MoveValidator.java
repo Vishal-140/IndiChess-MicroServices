@@ -178,13 +178,26 @@ public class MoveValidator {
         String rights = board.getCastleRights();
         boolean isWhite = piece.getColor() == PieceColor.WHITE;
 
+        // 0. General Rule: Cannot castle if currently in check
+        if (isKingInCheck(board, piece.getColor())) {
+            return false;
+        }
+
         // Kingside (e.g., e1 -> g1)
         if (c2 > c1) {
              char requiredRight = isWhite ? 'K' : 'k';
              if (rights.indexOf(requiredRight) == -1) return false;
              // Check path clear (f1, g1)
              if (board.getPiece(r1, 5) != null || board.getPiece(r1, 6) != null) return false;
-             // Check path safe (TODO: cannot castle out of, through, or into check)
+             
+             // Check path safe (f1 cannot be attacked)
+             // Attacker color is opposite
+             PieceColor riskColor = isWhite ? PieceColor.BLACK : PieceColor.WHITE;
+             if (isSquareAttacked(board, r1, 5, riskColor)) return false;
+             
+             // Destination (g1) safety is checked by general "isKingInCheck" after simulation,
+             // but strictly checking it here is fine/redundant.
+             if (isSquareAttacked(board, r1, 6, riskColor)) return false;
         } 
         // Queenside (e.g., e1 -> c1)
         else {
@@ -192,6 +205,13 @@ public class MoveValidator {
              if (rights.indexOf(requiredRight) == -1) return false;
              // Check path clear (d1, c1, b1)
              if (board.getPiece(r1, 3) != null || board.getPiece(r1, 2) != null || board.getPiece(r1, 1) != null) return false;
+             
+             // Check path safe (d1 cannot be attacked)
+             PieceColor riskColor = isWhite ? PieceColor.BLACK : PieceColor.WHITE;
+             if (isSquareAttacked(board, r1, 3, riskColor)) return false;
+             
+             // Destination (c1) checked by isKingInCheck after simulation
+             if (isSquareAttacked(board, r1, 2, riskColor)) return false;
         }
         return true;
     }
